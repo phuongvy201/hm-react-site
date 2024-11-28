@@ -1,0 +1,254 @@
+
+.roboto-thin {
+  font-family: "Roboto", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.roboto-light {
+  font-family: "Roboto", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.roboto-regular {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.roboto-medium {
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.roboto-bold {
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.roboto-black {
+  font-family: "Roboto", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.roboto-thin-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 100;
+  font-style: italic;
+}
+
+.roboto-light-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.roboto-regular-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.roboto-medium-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.roboto-bold-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.roboto-black-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.container-login {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+.container-login h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+.benefits {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+.benefit {
+  text-align: center;
+}
+.benefit img {
+  width: 50px;
+  height: 50px;
+}
+.benefit p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+.benefit a {
+  color: #ff6600;
+  text-decoration: none;
+  font-size: 12px;
+}
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.form-group input::placeholder {
+  color: #ccc;
+}
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.form-options a {
+  color: #ff6600;
+  text-decoration: none;
+  font-size: 12px;
+}
+.login-button {
+  background-color: #003366;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #ccc;
+}
+.divider span {
+  margin: 0 10px;
+  font-size: 14px;
+  color: #666;
+}
+.social-login {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.social-login a { 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 20px;
+  text-decoration: none;
+}
+.social-login a.facebook {
+  background-color: #3b5998;
+}
+.social-login a.google {
+  background-color: #db4437;
+}
+.signup {
+  font-size: 14px;
+}
+.signup a {
+  color: #ff6600;
+  text-decoration: none;
+}
+.signin-container {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.signin-container input[type="text"],
+.signin-container input[type="email"],
+.signin-container input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #004080;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.btn:hover {
+  background-color: #003366;
+}
+.signin-link {
+  text-align: center;
+  margin-top: 20px;
+}
+.signin-link a {
+  color: #ff6600;
+  text-decoration: none;
+}
+.login-link a:hover {
+  text-decoration: underline;
+}
+.terms {
+  font-size: 12px;
+  color: #666;
+  margin-top: 20px;
+}
+.terms a {
+  color: #ff6600;
+  text-decoration: none;
+}
+.terms a:hover {
+  text-decoration: underline;
+}
