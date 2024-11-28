@@ -20,6 +20,7 @@ export default function Products() {
       if (response.data.success) {
         setProducts(response.data.data);
         setPagination(response.data.meta);
+	console.log(response.data.data);
       }
     } catch (err) {
       setError("Không thể tải danh sách sản phẩm");
