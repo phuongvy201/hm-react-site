@@ -29,7 +29,6 @@ export default function Checkout() {
   const [paypalError, setPaypalError] = useState(null);
 
   useEffect(() => {
-    // Check if cart is empty, redirect to cart page
     if (!cartItems.length) {
       navigate("/cart");
       return;
