@@ -54,12 +54,7 @@
   .header-quicklink .position-relative .text-item {
     display: none; /* Ẩn các liên kết nhanh */
   }
-  .search-container input {
-    display: none; /* Ẩn ô tìm kiếm */
-  }
-  .search-container {
-    border: none; /* Xóa viền ô tìm kiếm */
-  }
+
   .header-navigation {
     display: none !important; /* Ẩn điều hướng trên header */
   }

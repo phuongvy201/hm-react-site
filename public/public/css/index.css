@@ -155,7 +155,6 @@ body {
   height: 50px;
 }
 .search-container input {
-  border: none;
   outline: none;
   flex-grow: 1;
   font-size: 16px;
@@ -840,37 +839,35 @@ body {
 
 /* ------------------------------ RESPONSIVE ------------------------- */
 
-/* Mobile */
-@media (max-width: 767px) {
-  /* --------- HEADER ----------------- */
-  @media (max-width: 576px) {
-    .pagination {
-      gap: 1px;  /* Giảm khoảng cách giữa các nút */
-    }
-    
-    .pagination .page-link {
-      padding: 0.2rem 0.35rem;  /* Giảm padding nhiều hơn */
-      font-size: 0.75rem;      /* Giảm font-size nhỏ hơn */
-      min-width: 25px;         /* Đặt chiều rộng tối thiểu */
-      text-align: center;      /* Căn giữa text */
-    }
-  
-    /* Điều chỉnh nút Trước/Tiếp */
-    .pagination .previous .page-link,
-    .pagination .next .page-link {
-      padding: 0.2rem 0.4rem;
-      font-size: 0.75rem;
-    }
-  }
-  .header-quicklink .position-relative .text-item {
-    display: none; /* Ẩn các liên kết nhanh */
-  }
+/* --------- HEADER ----------------- */
+@media (max-width: 576px) {
   .search-container input {
     display: none; /* Ẩn ô tìm kiếm */
   }
   .search-container {
     border: none; /* Xóa viền ô tìm kiếm */
   }
+  .pagination {
+    gap: 1px; /* Giảm khoảng cách giữa các nút */
+  }
+
+  .pagination .page-link {
+    padding: 0.2rem 0.35rem; /* Giảm padding nhiều hơn */
+    font-size: 0.75rem; /* Giảm font-size nhỏ hơn */
+    min-width: 25px; /* Đặt chiều rộng tối thiểu */
+    text-align: center; /* Căn giữa text */
+  }
+
+  /* Điều chỉnh nút Trước/Tiếp */
+  .pagination .previous .page-link,
+  .pagination .next .page-link {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+  }
+  .header-quicklink .position-relative .text-item {
+    display: none; /* Ẩn các liên kết nhanh */
+  }
+
   .header-navigation {
     display: none !important; /* Ẩn điều hướng trên header */
   }
@@ -878,12 +875,13 @@ body {
     order: 2; /* Đặt thứ tự tìm kiếm */
   }
   .header-logo {
-    order: 3; /* Đặt thứ tự logo */
-    display: flex; /* Hiển thị logo */
-    justify-content: center; /* Căn giữa logo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
+
   .header-logo .img-logo {
-    width: 80%; /* Đặt chiều rộng logo */
+    width: 100%; /* Đặt chiều rộng logo */
   }
   .header-quicklink {
     order: 4; /* Đặt thứ tự liên kết nhanh */

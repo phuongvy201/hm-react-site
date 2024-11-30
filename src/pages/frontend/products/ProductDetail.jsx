@@ -27,6 +27,7 @@ export default function ProductDetail() {
   const [mainImage, setMainImage] = useState("");
   const [basePrice, setBasePrice] = useState(0);
   const { isAuthenticated } = useAuth();
+  const token = localStorage.getItem("token");
 
   const toggleText = () => setIsExpanded((prev) => !prev);
 
@@ -92,7 +93,7 @@ export default function ProductDetail() {
     fetchData();
   }, [slug]);
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
+    if (!token) {
       Toast.fire({
         icon: "error",
         title: "Please login to add products to cart!",

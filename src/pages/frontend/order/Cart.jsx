@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import cartService from "../../../service/CartService";
 import { urlImage } from "../../../config";
 import { useCart } from "../../../context/CartContext";

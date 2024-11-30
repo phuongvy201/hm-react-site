@@ -5,6 +5,7 @@ import { useCart } from "../../context/CartContext";
 import NavigationHeader from "../../components/NavigationHeader";
 import productService from "../../service/ProductService";
 import Product from "../../components/Product";
+import { iconSearch } from "../../assets/imgs/icons8-search-50.png";
 
 const Header = () => {
   const token = localStorage.getItem("token");
@@ -242,13 +243,13 @@ const Header = () => {
     <>
       <section className="header">
         <div className="container">
-          <div className="row align-items-center py-2 ">
+          <div className="row align-items-center py-2 justify-content-center">
             {/* Phần điều hướng mới cho điện thoại */}
             <NavigationHeader />
-            <div className="header-logo col-7 col-sm-3 col-md-3">
-              <Link to="/">
+            <div className="header-logo col-4 col-sm-3 col-md-3">
+              <Link className=""  to="/">
                 <img
-                  className="img-logo"
+                  className="img-logo w-100"
                   src="https://printerval.com/assets/images/logo.svg"
                   alt="logo"
                 />
@@ -262,6 +263,7 @@ const Header = () => {
                 <input
                   type="text"
                   value={searchKeyword}
+                  className="border-0"
                   onChange={(e) => setSearchKeyword(e.target.value)}
                   placeholder="Search products and designs"
                 />
@@ -274,7 +276,7 @@ const Header = () => {
 
             <form
               onSubmit={handleSearch}
-              className="header-search-mobile col-1 d-block d-sm-none justify-content-center"
+              className="header-search-mobile col-2 d-block d-sm-none d-flex justify-content-center"
             >
               <button
                 className="btn-search"
@@ -283,7 +285,11 @@ const Header = () => {
                 data-bs-target="#staticBackdrop"
               >
                 <input type="text" placeholder="Olivia rodrigo" />
-                <i className="fas fa-search icon-search" />
+                <img
+                  style={{ width: 24, height: 24 }}
+                  src="https://img.icons8.com/?size=50&id=7695&format=png"
+                  alt=""
+                />
               </button>
               <div
                 className="modal fade"
@@ -336,25 +342,28 @@ const Header = () => {
                             <div className="product-container-occasions">
                               <div className="row">
                                 {searchResults.map((product) => (
-                                  
-                                    <Product product={product} />
-                               
+                                  <Product product={product} />
                                 ))}
                               </div>
                             </div>
                           </div>
                         </div>
-                      ) : searchKeywordMobile.trim() !== "" && (
-                        <div className="alert alert-info text-center" role="alert">
-                          No product found for "{searchKeywordMobile}"
-                        </div>
+                      ) : (
+                        searchKeywordMobile.trim() !== "" && (
+                          <div
+                            className="alert alert-info text-center"
+                            role="alert"
+                          >
+                            No product found for "{searchKeywordMobile}"
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
                 </div>
               </div>
             </form>
-            <div className="header-quicklink col-3 col-sm-2 col-md-2 row">
+            <div className="header-quicklink col-4 col-md-2 col-lg-2 row">
               {/* Account Icon with dropdown menu */}
               <div className="col-lg-4 order-tracking">
                 <div className="text-center position-relative">
@@ -392,7 +401,7 @@ const Header = () => {
                   <div className="text-item">Tracking</div>
                 </div>
               </div>
-              <div className="col-6 col-md-6 col-lg-4 d-none d-sm-block">
+              <div className="col-6 col-md-6 col-lg-4 d-none d-sm-block ">
                 <div className="dropdown text-center position-relative">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -409,10 +418,10 @@ const Header = () => {
                     />
                   </svg>
                   {renderDropdownMenu()}
-                  <div className="text-item">Account</div>
+                  <div className="text-item text-dark">Account</div>
                 </div>
               </div>
-              <div className="col-6 d-block d-sm-none text-center">
+              <div className="col-6 d-block d-sm-none text-center d-flex justify-content-center">
                 <button
                   className="btn-user-mobile"
                   type="button"

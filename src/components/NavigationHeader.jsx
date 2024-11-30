@@ -57,7 +57,7 @@ export default function NavigationHeader() {
     fetchPages();
   }, []);
   return (
-    <div className="col-1 d-flex justify-content-center d-sm-none">
+    <div className="col-2 d-flex d-sm-none">
       <button
         className="btn-header-navigation-mobile"
         type="button"

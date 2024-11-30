@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import customerService from "../service/CustomerService";
 import { urlImage } from "../config";
 import authService from "../service/AuthService";
+import { useCart } from "../context/CartContext";
 export default function ProfileSidebar() {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { updateCartCount } = useCart();
   const [error, setError] = useState("");
   const navigate = useNavigate();
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function ProfileSidebar() {
       // Xóa token khỏi localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-
+      updateCartCount();
       // Chuyển hướng về trang login
       navigate("/");
     } catch (error) {
