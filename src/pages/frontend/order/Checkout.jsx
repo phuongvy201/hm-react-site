@@ -33,7 +33,6 @@ export default function Checkout() {
   console.log("user", user);
 
   useEffect(() => {
-    // Check if cart is empty, redirect to cart page
     if (!cartItems.length) {
       navigate("/cart");
       return;
