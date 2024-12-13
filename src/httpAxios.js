@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const httpAxios = axios.create({
-  baseURL: "http://3.25.226.88:8000/api/",
+  baseURL: "http://localhost/hmfulfill/public/api/",
   headers: {
     "Content-Type": "multipart/form-data",
     Accept: "application/json",

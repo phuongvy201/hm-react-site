@@ -3,16 +3,25 @@ import shopProfileService from "../../../service/ShopProfileService";
 import { Link, useParams } from "react-router-dom";
 import { urlImage } from "../../../config";
 import Product from "../../../components/Product";
+import Swal from "sweetalert2";
 
 export default function ShopProfile() {
   const [shopInfo, setShopInfo] = useState([]);
+  const [idShop, setIdShop] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { sellerId } = useParams();
   const [categories, setCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
+  const token = localStorage.getItem("token");
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+  });
   useEffect(() => {
     const fetchShopData = async () => {
       try {
@@ -24,6 +33,8 @@ export default function ShopProfile() {
           setShopInfo(response.data.data);
           setCategories(Object.values(response.data.data.categories));
           setTotalPages(response.data.data.products.last_page);
+          setIdShop(response.data.data.shop.id);
+          console.log(response.data.data);
         }
       } catch (error) {
         setError("Không thể tải thông tin shop");
@@ -36,6 +47,19 @@ export default function ShopProfile() {
     setLoading(true);
     fetchShopData();
   }, [sellerId, currentPage]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      try {
+        const response = await shopProfileService.checkFollow(idShop);
+        console.log(response.data.is_following);
+        setIsFollowing(response.data.is_following);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    checkFollowStatus();
+  }, [idShop]);
 
   const handlePageClick = (page) => {
     setCurrentPage(page);
@@ -48,10 +72,32 @@ export default function ShopProfile() {
     }
     return pages;
   };
-
+  const handleFollow = async () => {
+    try {
+      const response = await shopProfileService.follow(idShop);
+      setIsFollowing(true);
+      Toast.fire({ icon: "success", title: "Successfully followed the shop!" });
+    } catch (error) {
+      console.error("Error:", error);
+      Toast.fire({ icon: "error", title: "Error following the shop!" });
+    }
+  };
+  const handleUnfollow = async () => {
+    try {
+      const response = await shopProfileService.unfollow(idShop);
+      setIsFollowing(false);
+      Toast.fire({
+        icon: "success",
+        title: "Successfully unfollowed the shop!",
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      Toast.fire({ icon: "error", title: "Error unfollowing the shop!" });
+    }
+  };
   return (
     <div className="container">
-      <div className="seller-profile">
+      <div className="seller-profile py-4">
         <div className="seller-banner">
           <img
             src={shopInfo?.shop?.banner_url || "default-banner-url"}
@@ -67,7 +113,7 @@ export default function ShopProfile() {
             />
           </div>
           <div className="seller-details">
-            <h1 className="seller-name">{shopInfo.shopName}</h1>
+            <h1 className="seller-name mt-2">{shopInfo?.shop?.name}</h1>
             <div className="seller-stats">
               <div className="stat-item">
                 <span className="stat-number">
@@ -82,36 +128,28 @@ export default function ShopProfile() {
                 </span>
                 <span className="stat-label">Products</span>
               </div>
-            </div>
-            <div className="seller-actions">
-              <button className="btn-follow">
-                <i className="fas fa-heart" />
-                Follow
-              </button>
-              <button className="btn-contact">
-                <i className="fas fa-envelope" />
-                Contact
-              </button>
+              {token == null ? (
+                <div className="seller-actions">
+                  <button
+                    className="btn-follow"
+                    onClick={isFollowing ? handleUnfollow : handleFollow}
+                  >
+                    <i className="fas fa-heart" />
+                    {isFollowing ? "Unfollow" : "Follow"}
+                  </button>
+                  {/* <button className="btn-contact">
+                 <i className="fas fa-envelope" />
+                 Contact
+               </button> */}
+                </div>
+              ) : (
+                ""
+              )}
             </div>
           </div>
         </div>
       </div>
-      <div className="shopprofile-content mt-4">
-        <h2>Shop all items</h2>
-        <div className="shopprofile-category-list">
-          {categories.map((category) => (
-            <div key={category.id} className="shopprofile-category-item">
-              <img
-                alt={`${category.name} items`}
-                height={100}
-                src={urlImage + "images/" + category.image}
-                width={100}
-              />
-              <p>{category.name}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+
       <div className="product-container-occasions mt-4">
         <div className="row">
           {shopInfo?.products?.data?.map((product) => (

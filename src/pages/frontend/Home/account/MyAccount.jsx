@@ -123,7 +123,7 @@ export default function MyAccount() {
     profileData.append("name", fullName);
     profileData.append("phone_number", phoneNumber);
     profileData.append("address", address);
-    profileData.append("gender", gender);
+    profileData.append("gender", 1);
 
     const response = await customerService.updateCurrentUser(profileData);
     if (response.status === 200) {
@@ -290,31 +290,6 @@ export default function MyAccount() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                     />
-                  </div>
-                  <div className="account-form-group">
-                    <label> Gender </label>
-                    <div className="radio-group">
-                      <label>
-                        <input
-                          name="gender"
-                          type="radio"
-                          value="1"
-                          checked={gender === 1}
-                          onChange={(e) => setGender(Number(e.target.value))}
-                        />
-                        Female
-                      </label>
-                      <label>
-                        <input
-                          name="gender"
-                          type="radio"
-                          value="2"
-                          checked={gender === 2}
-                          onChange={(e) => setGender(Number(e.target.value))}
-                        />
-                        Male
-                      </label>
-                    </div>
                   </div>
                   <div className="account-form-group">
                     <button className="btn" type="submit">

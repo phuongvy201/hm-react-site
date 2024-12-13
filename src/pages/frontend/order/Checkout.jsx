@@ -5,19 +5,20 @@ import Toast from "sweetalert2";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { PAYPAL_CLIENT_ID } from "../../../config/paypal";
 import httpAxios from "../../../httpAxios";
-import cartService from "../../../service/CartService";
-import { useCart } from "../../../context/CartContext";
+import orderService from "../../../service/OrderService";
+import { useDispatch } from "react-redux";
+import { clearCart } from "../../../state/cartSlice";
 
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { updateCartCount } = useCart();
-  const { cartItems, subtotal, shippingCost, total, formData } =
+  const dispatch = useDispatch();
+  const { cartItems, shippingCost, total, formData, totalAmount } =
     location.state || {
       cartItems: [],
-      subtotal: 0,
       shippingCost: 0,
       total: 0,
+      totalAmount: 0,
       formData: {},
     };
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -27,6 +28,9 @@ export default function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [paypalError, setPaypalError] = useState(null);
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
+  console.log("user", user);
 
   useEffect(() => {
     // Check if cart is empty, redirect to cart page
@@ -38,19 +42,17 @@ export default function Checkout() {
 
   const getAvailableGateway = async (amount) => {
     try {
-      const response = await httpAxios.post("/payment-test/get-gateway", {
-        amount: amount,
-      });
+      const response = await orderService.getGateway({ amount: amount });
 
       if (response.data?.success) {
         const gateway = response.data.gateway;
+        console.log("gateway", gateway);
         setSelectedGateway(gateway);
         setClienttId(gateway.client_id); // Sửa lại từ "setClinetId" thành "setClientId"
         return gateway;
       } else {
         const errorMessage =
           response.data?.message || "Unable to get payment gateway information";
-        console.warn("Gateway API returned failure:", response.data);
         Toast.fire({
           icon: "error",
           title: errorMessage,
@@ -59,11 +61,6 @@ export default function Checkout() {
       }
     } catch (error) {
       // Log detailed error for debugging
-      console.error("Error occurred while fetching gateway:", {
-        message: error.message,
-        response: error.response?.data,
-        stack: error.stack,
-      });
 
       // Show friendly error message to the user
       const userFriendlyMessage =
@@ -92,23 +89,14 @@ export default function Checkout() {
 
       return response.data;
     } catch (error) {
-      console.error("Save Transaction Error:", error);
       throw error;
     }
-  };
-
-  // Hàm chuyển đổi giá trị sang số
-  const formatPrice = (price) => {
-    return parseFloat(price || 0).toFixed(2);
   };
 
   // Hàm khởi tạo PayPal khi component mount
   useEffect(() => {
     const initializePayPal = async () => {
       if (!total || total <= 0) {
-        console.warn(
-          "Total amount is invalid, skipping PayPal initialization."
-        );
         return;
       }
 
@@ -117,12 +105,9 @@ export default function Checkout() {
         const gateway = await getAvailableGateway(total);
         if (gateway) {
           setPaypalLoaded(true);
-          console.log("PayPal initialized successfully with gateway:", gateway);
         } else {
-          console.warn("Failed to initialize PayPal. Gateway not found.");
         }
       } catch (error) {
-        console.error("PayPal initialization error:", error);
         Toast.fire({
           icon: "error",
           title: "Error occurred while initializing PayPal.",
@@ -132,70 +117,56 @@ export default function Checkout() {
 
     initializePayPal();
   }, [total]);
+  const calculateTotals = (cartItems, shippingCost) => {
+    let total = 0;
+
+    cartItems.forEach((shop) => {
+      shop.items.forEach((item) => {
+        total += parseFloat(item.price).toFixed(2) * item.count;
+      });
+    });
+
+    // Tổng giá trị bao gồm phí vận chuyển
+    const totalAmount = total + shippingCost;
+
+    return { total, totalAmount };
+  };
 
   // Cập nhật giá trị trong formData
-  const createPurchaseUnits = (total, subtotal, shippingCost, cartItems) => {
+  const createPurchaseUnits = (cartItems, shippingCost) => {
+    const { total, totalAmount } = calculateTotals(cartItems, shippingCost);
+
+    // Đảm bảo trả về cấu trúc yêu cầu đúng của PayPal
     return [
       {
         amount: {
-          value: formatPrice(total),
+          currency_code: "USD",
+          value: totalAmount.toFixed(2), // Tổng giá trị đơn hàng bao gồm cả phí vận chuyển
           breakdown: {
             item_total: {
               currency_code: "USD",
-              value: formatPrice(subtotal),
+              value: total.toFixed(2), // Tổng giá trị của các sản phẩm (không bao gồm phí vận chuyển)
             },
             shipping: {
               currency_code: "USD",
-              value: formatPrice(shippingCost),
+              value: shippingCost.toFixed(2), // Phí vận chuyển
             },
           },
         },
-        items: cartItems.map((item, index) => ({
-          name: `Product ${index + 1}`,
-          unit_amount: {
-            currency_code: "USD",
-            value: formatPrice(item.product.sale_price),
-          },
-          quantity: item.quantity,
-        })),
+        items: cartItems.flatMap((shop, shopIndex) =>
+          shop.items.map((item, itemIndex) => ({
+            name: `product - Position ${shopIndex + 1}-${itemIndex + 1}`, // Ghi "product - vị trí"
+            unit_amount: {
+              currency_code: "USD",
+              value: parseFloat(item.price).toFixed(2), // Giá sản phẩm
+            },
+            quantity: item.count, // Số lượng sản phẩm
+          }))
+        ),
       },
     ];
   };
-  const createOrderData = async (cartItems, total, formData, shippingCost) => {
-    const orderData = {
-      seller_id: cartItems[0]?.seller_id,
-      total_amount: total,
-      order_details: cartItems.map((item) => ({
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.product.sale_price,
-        attributes: {
-          color: item.attributes.color,
-          size: item.attributes.size,
-        },
-      })),
-      shipping: {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-        email: formData.email,
-        address: formData.address,
-        city: formData.city,
-        zip_code: formData.zipCode,
-        shipping_cost: shippingCost,
-        shipping_method: "standard",
-        country: formData.country,
-        notes: formData.shippingNotes,
-      },
-    };
 
-    const orderResponse = await httpAxios.post("/orders", orderData);
-    if (!orderResponse.data.success) {
-      throw new Error("Unable to create order");
-    }
-
-    return orderResponse.data;
-  };
   const saveTransactionData = async (data) => {
     const transactionResult = await saveTransaction(data);
     if (!transactionResult.success) {
@@ -314,27 +285,39 @@ export default function Checkout() {
         <div className="col-12 col-md-12 col-lg-6">
           <div className="order-summary">
             <h1>Order Review</h1>
-            {cartItems.map((item) => (
-              <div key={item.id} className="order-item">
-                <img
-                  src={urlImage + item.product.image}
-                  alt={item.product.name}
-                />
-                <div className="product-details">
-                  <h2>{item.product.name}</h2>
-                  <p>Size: {item.attributes.size}</p>
-                  <p>Color: {item.attributes.color}</p>
-
-                  <div className="d-flex ">
-                    <div className="me-auto">
-                      <div className="pricing-info">
-                        <div className="discounted-price">
-                          ${item.product.sale_price} × {item.quantity}
+            {cartItems.map((seller) => (
+              <div key={seller.sellerId} className="order-seller ">
+                <p className="shop-name ">
+                  <i
+                    style={{ color: "#C0C0C0" }}
+                    className="fas fa-store me-2 mt-3"
+                  ></i>
+                  {seller.shopName}
+                </p>
+                {seller.items.map((item) => (
+                  <div key={item.id} className="order-item">
+                    <img
+                      src={urlImage + item.image}
+                      alt={item.name}
+                      className="order-item-image ms-2"
+                    />
+                    <div className="product-details">
+                      <h2>{item.name}</h2>
+                      {item.size && <p>Size: {item.size}</p>}
+                      {item.color && <p>Color: {item.color}</p>}
+                      <div className="d-flex">
+                        <div className="me-auto">
+                          <div className="pricing-info">
+                            <div className="discounted-price">
+                              ${parseFloat(item.price).toFixed(2)} ×{" "}
+                              {item.count}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             ))}
           </div>
@@ -358,7 +341,7 @@ export default function Checkout() {
                   <i className="fas fa-check check" /> Tracking number
                 </div>
               </div>
-              <div className="price">${shippingCost.toFixed(2)}</div>
+              <div className="price">${parseInt(shippingCost).toFixed(2)}</div>
             </div>
           </div>
           <div className="order-summary mt-3">
@@ -373,16 +356,20 @@ export default function Checkout() {
             <div className="details">
               <div>
                 <span>Subtotal:</span>
-                <span className="value">${subtotal.toFixed(2)}</span>
+                <span className="value">${parseFloat(total).toFixed(2)}</span>
               </div>
               <div>
                 <span>Shipping fee:</span>
-                <span className="value">+${shippingCost.toFixed(2)}</span>
+                <span className="value">
+                  + ${parseFloat(shippingCost).toFixed(2)}
+                </span>
               </div>
 
               <div>
                 <span>Total:</span>
-                <span className="total">${total.toFixed(2)}</span>
+                <span className="total">
+                  ${parseFloat(totalAmount).toFixed(2)}
+                </span>
               </div>
             </div>
           </div>
@@ -397,7 +384,6 @@ export default function Checkout() {
                   intent: "capture",
                 }}
                 onError={(err) => {
-                  console.error("PayPal Script Error:", err);
                   setPaypalError(err);
                   Toast.fire({
                     icon: "error",
@@ -408,7 +394,7 @@ export default function Checkout() {
                 <PayPalButtons
                   style={{ layout: "vertical" }}
                   disabled={isProcessing}
-                  forceReRender={[total, subtotal, shippingCost]}
+                  forceReRender={[total, totalAmount, shippingCost]}
                   createOrder={async (data, actions) => {
                     try {
                       if (!selectedGateway) {
@@ -416,17 +402,14 @@ export default function Checkout() {
                       }
 
                       const purchase_units = createPurchaseUnits(
-                        total,
-                        subtotal,
-                        shippingCost,
-                        cartItems
+                        cartItems,
+                        shippingCost
                       );
 
                       return actions.order.create({
                         purchase_units,
                       });
                     } catch (error) {
-                      console.error("Create order error:", error);
                       Toast.fire({
                         icon: "error",
                         title: error.message || "Unable to create order",
@@ -437,8 +420,7 @@ export default function Checkout() {
                   onApprove={async (data, actions) => {
                     try {
                       setIsProcessing(true);
-                      const details = await actions.order.capture();
-                      console.log("PayPal payment captured:", details);
+                      await actions.order.capture();
 
                       if (!selectedGateway) {
                         throw new Error(
@@ -446,35 +428,193 @@ export default function Checkout() {
                         );
                       }
 
-                      // 1. Lưu transaction
+                      // Lưu giao dịch
                       await saveTransactionData(data);
 
-                      // 2. Tạo order và shipping cùng lúc
-                      const orderData = await createOrderData(
-                        cartItems,
-                        total,
-                        formData,
-                        shippingCost
-                      );
-                      console.log("Order created successfully:", orderData);
+                      // Tạo order và shipping cùng lúc
+                      const createOrderData = async () => {
+                        try {
+                          // Phân nhóm các sản phẩm theo sellerId
+                          const groupedItems = cartItems.reduce(
+                            (acc, seller) => {
+                              acc[seller.sellerId] = seller.items.map(
+                                (item) => ({
+                                  id: item.id,
+                                  count: item.count,
+                                  price: parseFloat(item.price) || 0,
+                                  color: item.color || null,
+                                  size: item.size || null,
+                                })
+                              );
+                              return acc;
+                            },
+                            {}
+                          );
 
-                      // 3. Clear cart và update count
-                      await cartService.clearCart();
-                      await updateCartCount();
+                          // Tạo đơn hàng cho từng người bán
+                          const orderResponses = await Promise.all(
+                            Object.entries(groupedItems).map(
+                              async ([sellerId, sellerItems]) => {
+                                // Tính tổng số tiền cho từng seller
+                                const sellerTotal = sellerItems.reduce(
+                                  (total, item) =>
+                                    total +
+                                    (item.count * parseFloat(item.price) || 0),
+                                  0
+                                );
 
-                      // 4. Hiển thị thông báo thành công
+                                // Chuẩn bị dữ liệu cho đơn hàng
+                                const orderData = {
+                                  seller_id: parseInt(sellerId), // Chuyển sellerId thành số
+                                  customer_id: token ? user.id : null, // ID khách hàng, dùng null nếu không đăng nhập
+                                  total_amount: sellerTotal, // Tổng số tiền cho seller
+                                  order_details: sellerItems.map((item) => ({
+                                    product_id: item.id, // ID sản phẩm
+                                    quantity: item.count, // Số lượng
+                                    price: parseFloat(item.price) || 0, // Giá của từng sản phẩm
+                                    attributes: {
+                                      color: item.color || null, // Thuộc tính màu sắcp
+                                      size: item.size || null, // Thuộc tính kích thước
+                                    },
+                                  })),
+                                  shipping: {
+                                    shipping_method: "standard", // Phương thức giao hàng
+                                    first_name: formData.firstName,
+                                    last_name: formData.lastName,
+                                    phone: formData.phone,
+                                    email: formData.email,
+                                    address: formData.address,
+                                    country: formData.country,
+                                    city: formData.city,
+                                    zip_code: formData.zipCode,
+                                    shipping_cost: shippingCost, // Chi phí vận chuyển
+                                    shipping_notes:
+                                      formData.shippingNotes || "", // Ghi chú vận chuyển (nếu có)
+                                  },
+                                };
+
+                                // Gửi yêu cầu tạo đơn hàng
+                                const orderResponse =
+                                  await orderService.createOrder(orderData);
+
+                                // Kiểm tra phản hồi từ server
+                                if (!orderResponse.data.success) {
+                                  throw new Error(
+                                    `Không thể tạo đơn hàng cho người bán ${sellerId}: ${orderResponse.data.message}`
+                                  );
+                                }
+
+                                return orderResponse.data.order;
+                              }
+                            )
+                          );
+
+                          return orderResponses;
+                        } catch (error) {
+                          throw error;
+                        }
+                      };
+
+                      // Tích hợp trực tiếp trong PayPalButtons
+                      <PayPalButtons
+                        style={{ layout: "vertical" }}
+                        disabled={isProcessing}
+                        forceReRender={[total, totalAmount, shippingCost]}
+                        createOrder={async (data, actions) => {
+                          try {
+                            if (!selectedGateway) {
+                              throw new Error(
+                                "Payment gateway not initialized"
+                              );
+                            }
+
+                            const purchase_units = createPurchaseUnits(
+                              total,
+                              totalAmount,
+                              shippingCost,
+                              cartItems
+                            );
+
+                            return actions.order.create({
+                              purchase_units,
+                            });
+                          } catch (error) {
+                            Toast.fire({
+                              icon: "error",
+                              title: error.message || "Unable to create order",
+                            });
+                            throw error;
+                          }
+                        }}
+                        onApprove={async (data, actions) => {
+                          try {
+                            setIsProcessing(true);
+                            await actions.order.capture();
+
+                            if (!selectedGateway) {
+                              throw new Error(
+                                "Payment gateway information not found"
+                              );
+                            }
+
+                            // Lưu giao dịch
+                            await saveTransactionData(data);
+
+                            // Tạo order và shipping cùng lúc
+                            await createOrderData();
+
+                            // Hiển thị thông báo thành công
+                            setPaymentSuccess(true);
+                            Toast.fire({
+                              icon: "success",
+                              title: "Order placed successfully!",
+                            });
+
+                            // Chuyển hướng về trang chủ
+                            dispatch(clearCart());
+                            setTimeout(() => {
+                              navigate("/thank-you");
+                            }, 1500);
+                          } catch (error) {
+                            Toast.fire({
+                              icon: "error",
+                              title:
+                                error.message ||
+                                "Error occurred while processing the order",
+                            });
+                          } finally {
+                            setIsProcessing(false);
+                          }
+                        }}
+                        onCancel={() => {
+                          Toast.fire({
+                            icon: "warning",
+                            title: "Payment has been cancelled",
+                          });
+                        }}
+                        onError={(err) => {
+                          Toast.fire({
+                            icon: "error",
+                            title: "An error occurred during payment",
+                          });
+                        }}
+                      />;
+
+                      // Tích hợp trực tiếp trong PayPalButtons
+
+                      await createOrderData();
                       setPaymentSuccess(true);
                       Toast.fire({
                         icon: "success",
                         title: "Order placed successfully!",
                       });
 
-                      // 5. Chuyển hướng về trang chủ
+                      // Chuyển hướng về trang chủ
+                      dispatch(clearCart());
                       setTimeout(() => {
-                        navigate("/");
+                        navigate("/thank-you");
                       }, 1500);
                     } catch (error) {
-                      console.error("Process Order Error:", error);
                       Toast.fire({
                         icon: "error",
                         title:
@@ -492,7 +632,6 @@ export default function Checkout() {
                     });
                   }}
                   onError={(err) => {
-                    console.error("PayPal Error:", err);
                     Toast.fire({
                       icon: "error",
                       title: "An error occurred during payment",

@@ -32,14 +32,14 @@ export default function Product({ product }) {
                 className="span"
               >
                 $
-                {product.price -
-                  (product.price * product.sale.discount_value) / 100}
+                {parseFloat(product.price -
+                  (product.price * product.sale.discount_value) / 100).toFixed(2)}
               </span>
               <span
                 style={{ fontSize: 16, textDecoration: "line-through" }}
                 className="span ms-3"
               >
-                ${product.price}
+                ${parseFloat(product.price).toFixed(2)}
               </span>
             </>
           ) : (
@@ -47,7 +47,7 @@ export default function Product({ product }) {
               style={{ color: "#c52c29", fontSize: 16, fontWeight: 600 }}
               className="span"
             >
-              ${product.price}
+              ${parseFloat(product.price).toFixed(2)}
             </span>
           )}
         </p>

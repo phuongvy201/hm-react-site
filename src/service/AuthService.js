@@ -10,6 +10,9 @@ const authService = {
   register: (data) => {
     return httpAxios.post(`/register`, data);
   },
+  verifymail: (data) => {
+    return httpAxios.post(`/verify-email`, data);
+  },
   changePassword: (data) => {
     return httpAxios.post(`/change-password`, data);
   },

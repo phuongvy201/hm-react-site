@@ -7,28 +7,29 @@ import ProductRelatedMobile from "./ProductRelatedMobile";
 import ProductSameSeller from "./ProductSameSeller";
 import ProductSameSellerMobile from "./ProductSameSellerMobile";
 import Swal from "sweetalert2";
-import cartService from "../../../service/CartService";
-import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../../context/AuthContext";
+import { useDispatch } from "react-redux";
+import { addToCart, clearCart } from "../../../state/cartSlice";
 
 export default function ProductDetail() {
   const [product, setProduct] = useState(null);
-  const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { updateCartCount } = useCart();
   const [size, setSize] = useState("");
-  const [price, setPrice] = useState("");
-  const [priceSale, setPriceSale] = useState("");
+  const [price, setPrice] = useState(0);
+  const [priceSize, setPriceSize] = useState(0);
+  const [priceSale, setPriceSale] = useState(0);
   const { slug } = useParams();
   const [isExpanded, setIsExpanded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
   const [mainImage, setMainImage] = useState("");
+  const [selectedSize, setSelectedSize] = useState(null);
   const [basePrice, setBasePrice] = useState(0);
   const { isAuthenticated } = useAuth();
   const token = localStorage.getItem("token");
-
+  const dispatch = useDispatch();
+  const cart = localStorage.getItem("cart");
   const toggleText = () => setIsExpanded((prev) => !prev);
 
   const handleDecrease = () => {
@@ -72,6 +73,7 @@ export default function ProductDetail() {
         if (productResponse.data.success) {
           const productData = productResponse.data.data;
           setProduct(productData);
+          console.log(productData);
           setMainImage(productData.image);
           setBasePrice(productData.price);
           setPrice(productData.price);
@@ -92,81 +94,47 @@ export default function ProductDetail() {
 
     fetchData();
   }, [slug]);
-  const handleAddToCart = async () => {
-    if (!token) {
-      Toast.fire({
-        icon: "error",
-        title: "Please login to add products to cart!",
-      });
-      return;
-    }
 
-    if (product.sizes && product.sizes.length > 0 && !size) {
-      Toast.fire({
-        icon: "error",
-        title: "Please select a size!",
-      });
-      return;
-    }
-    if (product.colors && product.colors.length > 0 && !selectedColor) {
-      Toast.fire({
-        icon: "error",
-        title: "Please select a color!",
-      });
-      return;
-    }
-
-    try {
-      const cartData = {
-        items: [
-          {
-            product_id: product.id,
-            quantity: quantity,
-            attributes: {
-              ...(size && { size: size.size_value }),
-              ...(selectedColor && { color: selectedColor.color_value }),
-            },
-          },
-        ],
-      };
-
-      const response = await cartService.addToCart(cartData);
-      console.log("Add to cart response:", response);
-      await updateCartCount();
-      if (response.data.success) {
-        Toast.fire({
-          icon: "success",
-          title: response.data.message || "Successfully added to cart!",
-        });
-      }
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      setError("Không thể thêm vào giỏ hàng. Vui lòng thử lại.");
-    }
-  };
   const handleSizeChange = (e) => {
+    // Tìm size được chọn
     const selectedSize = product.sizes.find(
       (s) => s.size_value === e.target.value
     );
+
+    // Cập nhật size được chọn vào state
     setSize(selectedSize);
 
+    // Xử lý giá theo size và sale
     if (selectedSize && selectedSize.price) {
-      setPrice(selectedSize.price);
+      const sizePrice = selectedSize.price;
+      setPriceSize(sizePrice); // Cập nhật giá cơ bản theo size
+      setPrice(sizePrice);
+
+      // Tính giá sale nếu có
       if (product.sale) {
-        setPriceSale(
-          selectedSize.price -
-            (selectedSize.price * product.sale.discount_value) / 100
-        );
+        const salePrice =
+          sizePrice - (sizePrice * product.sale.discount_value) / 100;
+        setPriceSale(salePrice); // Cập nhật giá sale theo size
+        setPrice(salePrice);
+      } else {
+        setPriceSale(null); // Không có khuyến mãi
       }
     } else {
+      // Nếu không chọn size, sử dụng giá gốc
       setPrice(basePrice);
+
+      // Tính giá sale dựa trên giá gốc nếu có
       if (product.sale) {
-        setPriceSale(
-          basePrice - (basePrice * product.sale.discount_value) / 100
-        );
+        const salePrice =
+          basePrice - (basePrice * product.sale.discount_value) / 100;
+        setPriceSale(salePrice); // Cập nhật giá sale gốc
+        setPrice(salePrice);
+      } else {
+        setPriceSale(null); // Không có khuyến mãi
       }
     }
   };
+
   return (
     <section className="content py-5">
       <div className="container">
@@ -207,18 +175,29 @@ export default function ProductDetail() {
                 <div className="p-2">
                   {product && product.sale ? (
                     <>
-                      <span class="pricesale me-2">
-                        {" "}
-                        ${priceSale ? priceSale : price}
-                      </span>{" "}
-                      <span class="price">${price ? price : ""}</span>
+                      <span className="pricesale me-2">
+                        $
+                        {parseFloat(priceSale ? priceSale : priceSize).toFixed(
+                          2
+                        )}
+                      </span>
+                      <span className="price">
+                        $
+                        {parseFloat(
+                          priceSize ? priceSize : product?.price
+                        ).toFixed(2)}
+                      </span>
                     </>
                   ) : (
-                    <span class="pricesale me-2">
-                      ${product && product.price ? product.price : ""}
+                    <span className="pricesale me-2">
+                      $
+                      {parseInt(
+                        priceSize !== 0 ? priceSize : product?.price
+                      ).toFixed(2)}
                     </span>
                   )}
                 </div>
+
                 <div className="p-2 discount-name">
                   {product && product.sale
                     ? `${parseInt(
@@ -308,6 +287,7 @@ export default function ProductDetail() {
                           style={{ outline: "none" }}
                           onChange={handleQuantityChange}
                           min="1"
+                          id="qty"
                           max={product?.stock || 1}
                         />
                         <button
@@ -325,7 +305,21 @@ export default function ProductDetail() {
                   <div className="row">
                     <div className="col-sm-10 d-flex justify-content-center">
                       <button
-                        onClick={handleAddToCart}
+                        onClick={() =>
+                          dispatch(
+                            addToCart({
+                              item: {
+                                ...product,
+                                price: price,
+                                count: quantity,
+                                size: size?.size_value,
+                                color: selectedColor?.color_value,
+                              },
+                              sellerId: product.seller_id,
+                              shopName: product.profile_shop.shop_name,
+                            })
+                          )
+                        }
                         className="add-to-cart-btn"
                       >
                         <i className="fas fa-shopping-bag" />
