@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import authService from "../../service/AuthService";
+import { BeatLoader } from "react-spinners";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ export default function SignUp() {
   });
   const [message, setMessage] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({
     email: "",
@@ -80,33 +82,22 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) {
       return;
     }
-
+    setIsLoading(true);
     try {
       const response = await authService.register(formData);
       const data = await response.data;
-
       if (data.status === "success") {
-        // // Save token to localStorage
-        // localStorage.setItem("token", data.access_token);
-
-        // // Save user info to localStorage
-        // localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Navigate based on role
-        if (data.status === "success") {
-          localStorage.setItem("token", data.access_token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          Toast.fire({
-            icon: "success",
-            title:
-              "Sign up successfully! Please check your email for the verification code.",
-          });
-          setStep(2);
-        }
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        Toast.fire({
+          icon: "success",
+          title:
+            "Sign up successfully! Please check your email for the verification code.",
+        });
+        setStep(2);
       }
     } catch (error) {
       if (error.response && error.response.data.errors) {
@@ -122,28 +113,29 @@ export default function SignUp() {
           title: "An error occurred during registration!",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
   const handleVerifyEmail = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await authService.verifymail({
-        email: formData.email, // Đặt key là "email" và value là "formData.email"
-        verification_code: verificationCode, // Đặt key là "verificationCode" và value tương ứng
+        email: formData.email,
+        verification_code: verificationCode,
       });
       const data = await response.data;
       if (data.status === "success") {
-        Toast.fire({
-          icon: "success",
-          title: "Email verified successfully!",
-        });
-
+        Toast.fire({ icon: "success", title: "Email verified successfully!" });
         navigate("/");
       }
       setMessage(response.data.message);
     } catch (error) {
       console.error("Error:", error);
       setMessage("Error verifying email");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,6 +154,15 @@ export default function SignUp() {
           <div className="col-sm-6">
             <div className="signin-container">
               <h1>Join With Us</h1>
+              {isLoading && (
+                <BeatLoader
+                  color="#36d7b7"
+                  loading={isLoading}
+                  aria-label="Loading Spinner"
+                  data-testid="loader"
+                  size={20}
+                />
+              )}
               {step === 1 ? (
                 <form onSubmit={handleSubmit}>
                   <label htmlFor="name">Name</label>
@@ -226,8 +227,13 @@ export default function SignUp() {
                       {errors.confirmPassword}
                     </div>
                   )}
-                  <button className="login-button" type="submit">
-                    Sign In
+                  <button
+                    className="login-button"
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    {" "}
+                    {isLoading ? "Loading..." : "Sign In"}{" "}
                   </button>
                 </form>
               ) : (
@@ -240,9 +246,14 @@ export default function SignUp() {
                     onChange={(e) => setVerificationCode(e.target.value)}
                     required
                   />{" "}
-                  <button className="btn  btn-success" type="submit">
-                    Verify Email
-                  </button>{" "}
+                  <button
+                    className="btn btn-success"
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    {" "}
+                    {isLoading ? "Loading..." : "Verify Email"}{" "}
+                  </button>
                 </form>
               )}
               {message && <p>{message}</p>}

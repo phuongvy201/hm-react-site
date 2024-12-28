@@ -77,6 +77,7 @@ const Home = () => {
                     <img
                       alt="Illustration of a sewing machine"
                       height={100}
+                      className="mx-auto"
                       src="https://cdn.printerval.com/unsafe/540x540/printerval.com/images/return.png"
                       width={100}
                     />

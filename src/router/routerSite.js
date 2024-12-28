@@ -15,6 +15,7 @@ import TestPayment from "../pages/frontend/TestPayment";
 import Products from "./../pages/frontend/products/Products";
 import Search from "../pages/frontend/products/Search";
 import OrderSuccess from "../pages/frontend/order/OrderSuccess";
+import AboutUs from "../pages/singlepages/AboutUs";
 const routerSite = [
   { path: "/", component: Home },
   { path: "/product/:slug", component: ProductDetail },
@@ -33,6 +34,7 @@ const routerSite = [
   { path: "/products", component: Products },
   { path: "/search", component: Search },
   { path: "/thank-you", component: OrderSuccess },
+  { path: "/about-us", component: AboutUs },
 ];
 
 export default routerSite;

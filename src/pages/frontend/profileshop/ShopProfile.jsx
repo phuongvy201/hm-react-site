@@ -10,6 +10,7 @@ export default function ShopProfile() {
   const [idShop, setIdShop] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isFollowing, setIsFollowing] = useState(false);
   const { sellerId } = useParams();
   const [categories, setCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,7 +35,7 @@ export default function ShopProfile() {
           setCategories(Object.values(response.data.data.categories));
           setTotalPages(response.data.data.products.last_page);
           setIdShop(response.data.data.shop.id);
-          console.log(response.data.data);
+          console.log(response.data.data.shop.id);
         }
       } catch (error) {
         setError("Không thể tải thông tin shop");
@@ -43,19 +44,19 @@ export default function ShopProfile() {
         setLoading(false);
       }
     };
-
     setLoading(true);
     fetchShopData();
   }, [sellerId, currentPage]);
-  const [isFollowing, setIsFollowing] = useState(false);
   useEffect(() => {
     const checkFollowStatus = async () => {
-      try {
-        const response = await shopProfileService.checkFollow(idShop);
-        console.log(response.data.is_following);
-        setIsFollowing(response.data.is_following);
-      } catch (error) {
-        console.error("Error:", error);
+      if (idShop) {
+        try {
+          const response = await shopProfileService.checkFollow(idShop);
+          console.log(response.data.is_following);
+          setIsFollowing(response.data.is_following);
+        } catch (error) {
+          console.error("Error:", error);
+        }
       }
     };
     checkFollowStatus();
@@ -100,7 +101,7 @@ export default function ShopProfile() {
       <div className="seller-profile py-4">
         <div className="seller-banner">
           <img
-            src={shopInfo?.shop?.banner_url || "default-banner-url"}
+            src={urlImage + shopInfo?.shop?.banner_url || "default-banner-url"}
             alt="Banner"
             className="banner-img"
           />
@@ -108,7 +109,7 @@ export default function ShopProfile() {
         <div className="seller-info">
           <div className="seller-avatar">
             <img
-              src={shopInfo?.shop?.logo_url || "default-avatar-url"}
+              src={urlImage + shopInfo?.shop?.logo_url || "default-avatar-url"}
               alt="Avatar"
             />
           </div>
@@ -128,14 +129,14 @@ export default function ShopProfile() {
                 </span>
                 <span className="stat-label">Products</span>
               </div>
-              {token == null ? (
+              {token !== null ? (
                 <div className="seller-actions">
                   <button
                     className="btn-follow"
                     onClick={isFollowing ? handleUnfollow : handleFollow}
                   >
                     <i className="fas fa-heart" />
-                    {isFollowing ? "Unfollow" : "Follow"}
+                    {isFollowing===true ? "Unfollow" : "Follow"}
                   </button>
                   {/* <button className="btn-contact">
                  <i className="fas fa-envelope" />

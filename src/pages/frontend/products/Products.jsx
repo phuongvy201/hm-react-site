@@ -43,7 +43,7 @@ export default function Products() {
       {loading && <Loading />}
       <div className="container">
         <div className="breadcrumb-link">
-          <p className="text-center">Products</p>
+          <p className="text-center">Products </p>
         </div>
 
         <div className="container-right mt-5">

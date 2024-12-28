@@ -85,16 +85,6 @@ const Navbar = () => {
           </div>
 
           <div className="navigation-box">
-            <Link to className="navigation-link">
-              Gift Guides &nbsp;
-            </Link>
-          </div>
-          <div className="navigation-box">
-            <Link to className="navigation-link">
-              Christmas
-            </Link>
-          </div>
-          <div className="navigation-box">
             <Link to="/products" className="navigation-link">
               Products
             </Link>

@@ -11,6 +11,7 @@ export default function PostCard({ post }) {
             className="img-fluid"
             src={urlImage + post.image}
             alt="picture.png"
+            style={{ objectFit: "cover", width: 415, height: 270 }} // Thêm thuộc tính object-fit
           />
         </div>
         <div className="">

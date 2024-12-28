@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import postService from "../service/PostService";
 import categoryService from "../service/CategoryService";
+import logo from "../assets/imgs/bluprinter logo.png";
 
 export default function NavigationHeader() {
   const [categories, setCategories] = useState([]);
@@ -84,7 +85,7 @@ export default function NavigationHeader() {
               <img
                 alt="Printerval logo"
                 height={50}
-                src="./public/img/logo.svg"
+                src={logo}
                 width={150}
               />
             </div>
@@ -98,14 +99,14 @@ export default function NavigationHeader() {
         </div>
         <div className="offcanvas-body">
           <ul className="item-list-mobile">
-            <li className="item-list-group-mobile">
+            {/* <li className="item-list-group-mobile">
               <div className="icon-wrapper-mobile icon-pink">
                 <i className="fas fa-box" />
               </div>
               <div className="item-text-mobile">
                 <Link to="#">Order Tracking</Link>
               </div>
-            </li>
+            </li> */}
             <li className="item-list-group-mobile">
               <div className="icon-wrapper-mobile icon-green">
                 <i className="fas fa-box" />
@@ -141,22 +142,7 @@ export default function NavigationHeader() {
                 </div>
               </div>
             </li>
-            <li className="item-list-group-mobile">
-              <div className="icon-wrapper-mobile icon-pink">
-                <i className="fas fa-gift" />
-              </div>
-              <div className="item-text-mobile">
-                <Link to="#">Gift Guides</Link>
-              </div>
-            </li>
-            <li className="item-list-group-mobile">
-              <div className="icon-wrapper-mobile icon-pink">
-                <i className="fas fa-tree" />
-              </div>
-              <div className="item-text-mobile">
-                <Link to="#">Christmas</Link>
-              </div>
-            </li>
+
             <li className="item-list-group-mobile">
               <div className="icon-wrapper-mobile icon-green">
                 <i className="fas fa-question-circle" />
@@ -200,12 +186,9 @@ export default function NavigationHeader() {
                   <ul className="submenu-list">
                     {topics.map((topic) => (
                       <li>
-                        <Link to={`/topic/${topic?.slug}`}>
-                          {topic?.name}
-                        </Link>
+                        <Link to={`/topic/${topic?.slug}`}>{topic?.name}</Link>
                       </li>
                     ))}
-                  
                   </ul>
                 </div>
               </div>

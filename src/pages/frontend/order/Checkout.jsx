@@ -78,7 +78,7 @@ export default function Checkout() {
       const response = await httpAxios.post("/payment-test/save-transaction", {
         gateway_id: selectedGateway.id,
         paypal_order_id: orderData.orderID,
-        amount: total,
+        amount: total + shippingCost,
         status: "COMPLETED",
       });
 
@@ -296,7 +296,13 @@ export default function Checkout() {
                 {seller.items.map((item) => (
                   <div key={item.id} className="order-item">
                     <img
-                      src={urlImage + item.image}
+                      src={
+                        item.image instanceof File
+                          ? URL.createObjectURL(item.image)
+                          : item.image?.startsWith("http")
+                          ? item.image
+                          : urlImage + item.image
+                      }
                       alt={item.name}
                       className="order-item-image ms-2"
                     />
@@ -304,6 +310,7 @@ export default function Checkout() {
                       <h2>{item.name}</h2>
                       {item.size && <p>Size: {item.size}</p>}
                       {item.color && <p>Color: {item.color}</p>}
+                      {item.type && <p>Type: {item.type}</p>}
                       <div className="d-flex">
                         <div className="me-auto">
                           <div className="pricing-info">
@@ -473,7 +480,8 @@ export default function Checkout() {
                                     price: parseFloat(item.price) || 0, // Giá của từng sản phẩm
                                     attributes: {
                                       color: item.color || null, // Thuộc tính màu sắcp
-                                      size: item.size || null, // Thuộc tính kích thước
+                                      size: item.size || null, 
+                                      type: item.type || null,
                                     },
                                   })),
                                   shipping: {

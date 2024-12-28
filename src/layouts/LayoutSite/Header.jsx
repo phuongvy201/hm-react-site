@@ -5,6 +5,7 @@ import NavigationHeader from "../../components/NavigationHeader";
 import productService from "../../service/ProductService";
 import Product from "../../components/Product";
 import { useDispatch, useSelector } from "react-redux";
+import logo from "../../assets/imgs/bluprinter logo.png";
 
 const Header = () => {
   const token = localStorage.getItem("token");
@@ -251,16 +252,12 @@ const Header = () => {
             <NavigationHeader />
             <div className="header-logo col-4 col-sm-3 col-md-3">
               <Link className="" to="/">
-                <img
-                  className="img-logo w-100"
-                  src="https://printerval.com/assets/images/logo.svg"
-                  alt="logo"
-                />
+                <img className="img-logo  w-100" src={logo} alt="logo" />
               </Link>
             </div>
             <form
               onSubmit={handleSearch}
-              className="header-search col-12 col-sm-7 col-md-7 d-none d-sm-flex"
+              className="header-search col-12 col-sm-7 col-md-7 d-none d-sm-flex justify-content-center"
             >
               <div className="search-container w-100">
                 <input
@@ -368,7 +365,7 @@ const Header = () => {
             </form>
             <div className="header-quicklink col-4 col-md-2 col-lg-2 row">
               {/* Account Icon with dropdown menu */}
-              <div className="col-lg-4 order-tracking">
+              {/* <div className="col-lg-4 order-tracking">
                 <div className="text-center position-relative">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -403,7 +400,7 @@ const Header = () => {
                   </svg>
                   <div className="text-item">Tracking</div>
                 </div>
-              </div>
+              </div> */}
               <div className="col-6 col-md-6 col-lg-4 d-none d-sm-block ">
                 <div className="dropdown text-center position-relative">
                   <svg

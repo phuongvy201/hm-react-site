@@ -12,10 +12,15 @@ export default function Product({ product }) {
           <div className="box-image">
             <img
               src={
-                product.image ? urlImage + product.image : "/placeholder.jpg"
+                product.image instanceof File
+                  ? URL.createObjectURL(product.image)
+                  : product.image?.startsWith("http")
+                  ? product.image
+                  : urlImage + product.image
               }
               className="img-product"
               alt={product.name || "Product image"}
+              style={{ objectFit: "cover", width: "100%",  }} // Thêm thuộc tính object-fit
             />
           </div>
           <div className="card-body-product">
@@ -32,8 +37,10 @@ export default function Product({ product }) {
                 className="span"
               >
                 $
-                {parseFloat(product.price -
-                  (product.price * product.sale.discount_value) / 100).toFixed(2)}
+                {parseFloat(
+                  product.price -
+                    (product.price * product.sale.discount_value) / 100
+                ).toFixed(2)}
               </span>
               <span
                 style={{ fontSize: 16, textDecoration: "line-through" }}

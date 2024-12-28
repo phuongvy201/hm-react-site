@@ -12,7 +12,11 @@ export default function ProductCardSm({ product }) {
           <div className="box-image">
             <img
               src={
-                product.image ? urlImage + product.image : "/placeholder.jpg"
+                product.image instanceof File
+                  ? URL.createObjectURL(product.image)
+                  : product.image?.startsWith("http")
+                  ? product.image
+                  : urlImage + product.image
               }
               className="img-product"
               alt={product.name || "Product image"}

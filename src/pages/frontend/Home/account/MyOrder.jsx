@@ -67,7 +67,15 @@ export default function MyOrder() {
                                   <img
                                     src={
                                       detail.product.image
-                                        ? urlImage + detail.product.image
+                                        ? detail.product.image instanceof File
+                                          ? URL.createObjectURL(
+                                              detail.product.image
+                                            )
+                                          : detail.product.image?.startsWith(
+                                              "http"
+                                            )
+                                            ? detail.product.image
+                                            : urlImage + detail.product.image
                                         : "default-image-url"
                                     }
                                     alt={detail.product.name}

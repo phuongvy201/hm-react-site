@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logo from "../../assets/imgs/bluprinter logo.png";
 const Footer = () => {
   return (
     <section style={{ backgroundColor: "#2f466c" }} className="footer mt-5">
@@ -8,7 +9,7 @@ const Footer = () => {
             <div className="col-12 col-md-6 col-lg-3">
               <div className="d-flex flex-row mb-3">
                 <div className="p-2 d-flex justify-content-center align-items-center">
-                  <Link to="#">
+                  <Link to="/page/shipping-delivery">
                     <img
                       className="img-fluid"
                       src="https://printerval.com/assets/images/support/shipping-2.svg?v=20241028070512"
@@ -27,7 +28,7 @@ const Footer = () => {
             <div className="col-12 col-md-6 col-lg-3">
               <div className="d-flex flex-row mb-3">
                 <div className="p-2 d-flex justify-content-center align-items-center">
-                  <Link to="#">
+                  <Link to="/page/secure-payments">
                     <img
                       className="img-fluid"
                       src="https://printerval.com/assets/images/support/security-3.svg?v=20241028070512"
@@ -46,7 +47,7 @@ const Footer = () => {
             <div className="col-12 col-md-6 col-lg-3">
               <div className="d-flex flex-row mb-3">
                 <div className="p-2 d-flex justify-content-center align-items-center">
-                  <Link to="#">
+                  <Link to="/page/free-return">
                     <img
                       className="img-fluid"
                       src="https://printerval.com/assets/images/support/free-return-2.svg?v=20241028070512"
@@ -65,7 +66,7 @@ const Footer = () => {
             <div className="col-12 col-md-6 col-lg-3">
               <div className="d-flex flex-row mb-3">
                 <div className="p-2 d-flex justify-content-center align-items-center">
-                  <Link to="#">
+                  <Link to="/page/local-support">
                     <img
                       className="img-fluid"
                       src="https://printerval.com/assets/images/support/support-2.svg?v=20241028070512"
@@ -90,7 +91,7 @@ const Footer = () => {
                 <img
                   className="img-fluid"
                   style={{ color: "#DDFFBB" }}
-                  src="./public/img/logo.svg"
+                  src={logo}
                   alt="logo"
                 />
               </div>
@@ -150,25 +151,10 @@ const Footer = () => {
                   <Link to="#">About Us</Link>
                 </div>
                 <div className="p-2">
-                  <Link to="#">Privacy Policy</Link>
+                  <Link to="/page/privacy-policy">Privacy Policy</Link>
                 </div>
                 <div className="p-2">
-                  <Link to="#">Terms of Service</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Payment methods</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Contact Us</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Help Center</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Sitemap</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Blog</Link>
+                  <Link to="/page/shipping-delivery">Shipping & Delivery</Link>
                 </div>
               </div>
             </div>
@@ -176,29 +162,15 @@ const Footer = () => {
               <div className="d-flex flex-column mb-3">
                 <div className="p-2 title-single-page">Company</div>
                 <div className="p-2">
-                  <Link to="#">About Us</Link>
+                  <Link to="/page/secure-payments">Secure Payments</Link>
                 </div>
                 <div className="p-2">
-                  <Link to="#">Privacy Policy</Link>
+                  <Link to="/page/free-return">Free Return</Link>
                 </div>
                 <div className="p-2">
-                  <Link to="#">Terms of Service</Link>
+                  <Link to="/page/local-support">Local Support</Link>
                 </div>
-                <div className="p-2">
-                  <Link to="#">Payment methods</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Contact Us</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Help Center</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Sitemap</Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">Blog</Link>
-                </div>
+               
               </div>
             </div>
           </div>

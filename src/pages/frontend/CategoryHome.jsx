@@ -31,11 +31,14 @@ export default function CategoryHome() {
           <div className="col-6 col-md-6 col-lg-4 mt-4">
             <div className="category-item mx-auto">
               <img
-                src={urlImage + "images/" + category.image}
+                src={urlImage + category.image}
                 alt="category"
                 style={{ height: "280px", objectFit: "cover", width: "100%" }}
               />
-              <Link to={`/category/${category.slug}`} className="text-category  py-2 rounded-pill">
+              <Link
+                to={`/category/${category.slug}`}
+                className="text-category  py-2 rounded-pill"
+              >
                 {category.name}
               </Link>
             </div>

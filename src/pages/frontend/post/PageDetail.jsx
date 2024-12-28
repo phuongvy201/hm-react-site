@@ -91,19 +91,12 @@ export default function PageDetail() {
             dangerouslySetInnerHTML={{ __html: post?.detail }}
             className="blog-content py-5"
           />
-       
         </div>
         <div className="col-12 col-md-4 col-lg-4 mt-5">
           <div className="featured-articles">
             <h2>Other articles</h2>
             {otherPages.map((item) => (
               <div className="article">
-                <img
-                  alt={item?.title}
-                  height={50}
-                  src={urlImage + item?.image}
-                  width={50}
-                />
                 <div className="details">
                   <Link to={`/page/${item?.slug}`}>{item?.title}</Link>
                   <div className="date">
