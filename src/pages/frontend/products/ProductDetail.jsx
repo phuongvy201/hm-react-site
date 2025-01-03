@@ -11,6 +11,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../state/cartSlice";
 import orderService from "../../../service/OrderService";
+import { ColorOptions } from "../../../constants/productConstants";
 
 export default function ProductDetail() {
   const [product, setProduct] = useState(null);
@@ -25,12 +26,17 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
   const [mainImage, setMainImage] = useState("");
+  const [productId, setProductId] = useState(0);
   const [basePrice, setBasePrice] = useState(0);
   const { isAuthenticated } = useAuth();
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
   const [shippingCost, setShippingCost] = useState(0);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const navigate = useNavigate();
+  const [selectedVariantImage, setSelectedVariantImage] = useState(null);
+  const [selectedAttributes, setSelectedAttributes] = useState({});
+
   const isFormValid = () => {
     return (
       formData.firstName &&
@@ -73,12 +79,12 @@ export default function ProductDetail() {
   };
 
   const handleIncrease = () => {
-    setQuantity((prev) => Math.min(product?.stock || 1, prev + 1));
+    setQuantity((prev) => Math.min(product?.product?.stock || 1, prev + 1));
   };
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value) || 1;
-    setQuantity(Math.min(Math.max(1, value), product?.stock || 1));
+    setQuantity(Math.min(Math.max(1, value), product?.product?.stock || 1));
   };
 
   const handleColorSelect = (color) => {
@@ -86,7 +92,7 @@ export default function ProductDetail() {
     if (color.image) {
       setMainImage(color.image);
     } else {
-      setMainImage(product.image);
+      setMainImage(product?.product?.image);
     }
   };
   const Toast = Swal.mixin({
@@ -109,8 +115,10 @@ export default function ProductDetail() {
         if (productResponse.data.success) {
           const productData = productResponse.data.data;
           setProduct(productData);
-          console.log(productData);
-          setMainImage(productData.image);
+          console.log("productData", productData);
+          console.log("productData.product.id", productData.product.id);
+          setProductId(productData.product.id);
+          setMainImage(productData.product.image);
           setBasePrice(productData.price);
           setPrice(parseFloat(productData.price));
           if (productData.sale) {
@@ -130,6 +138,13 @@ export default function ProductDetail() {
 
     fetchData();
   }, [slug]);
+  useEffect(() => {
+    if (selectedVariant?.image) {
+      setSelectedVariantImage(selectedVariant.image);
+    } else {
+      setSelectedVariantImage(null);
+    }
+  }, [selectedVariant]);
 
   const handleTypeChange = (e) => {
     const selectedType = product.types.find(
@@ -181,59 +196,107 @@ export default function ProductDetail() {
       [name]: value,
     }));
   };
+
   const handleAddToCart = () => {
-    // Check different cases
+    // Kiểm tra sản phẩm tồn tại
     if (!product) {
       Toast.fire({
         icon: "error",
-        title: "Product does not exist!",
+        title: "Sản phẩm không tồn tại!",
       });
       return;
     }
 
-    const hasColor = product.colors && product.colors.length > 0;
-    const hasSize = product.sizes && product.sizes.length > 0;
-    const hasType = product.types && product.types.length > 0;
+    // Kiểm tra các thuộc tính bắt buộc
+    const hasColor = colorAttribute && colorAttribute.values.length > 0;
+    const hasSize = sizeAttribute && sizeAttribute.values.length > 0;
+    const hasType = typeAttribute && typeAttribute.values.length > 0;
 
     if (hasColor && !selectedColor) {
       Toast.fire({
         icon: "error",
-        title: "Please select a color before adding to cart!",
+        title: "Vui lòng chọn màu sắc trước khi thêm vào giỏ hàng!",
       });
-      return; // Do not add to cart if color is not selected
+      return; // Ngăn chặn mở modal
     }
 
-    if (hasSize && !size) {
+    if (hasSize && !selectedAttributes["Size"]) {
       Toast.fire({
         icon: "error",
-        title: "Please select a size before adding to cart!",
+        title: "Vui lòng chọn kích thước trước khi thêm vào giỏ hàng!",
       });
-      return; // Do not add to cart if size is not selected
+      return; // Ngăn chặn mở modal
     }
 
-    if (hasType && !type) {
+    if (hasType && !selectedAttributes["Type"]) {
       Toast.fire({
         icon: "error",
-        title: "Please select a type before adding to cart!",
+        title: "Vui lòng chọn loại trước khi thêm vào giỏ hàng!",
       });
-      return; // Do not add to cart if type is not selected
+      return; // Ngăn chặn mở modal
     }
 
-    // If the product has no attributes, allow adding to cart
+    // Tính toán giá sản phẩm
+    const finalPrice = calculatePrice(product, selectedVariant, selectedColor);
+
+    // Xử lý hình ảnh
+    let productImage = "";
+    if (selectedVariantImage) {
+      if (selectedVariantImage instanceof File) {
+        productImage = URL.createObjectURL(selectedVariantImage);
+      } else if (selectedVariantImage.startsWith("data")) {
+        productImage = selectedVariantImage;
+      } else if (selectedVariantImage.startsWith("http")) {
+        productImage = selectedVariantImage;
+      } else {
+        productImage = urlImage + selectedVariantImage;
+      }
+    } else if (mainImage) {
+      if (mainImage instanceof File) {
+        productImage = URL.createObjectURL(mainImage);
+      } else if (mainImage.startsWith("data")) {
+        productImage = mainImage;
+      } else if (mainImage.startsWith("http")) {
+        productImage = mainImage;
+      } else {
+        productImage = urlImage + mainImage;
+      }
+    }
+
+    // Tạo item để thêm vào giỏ hàng
+    const cartItem = {
+      id: product.product.id,
+      name: product.product.name,
+      image: productImage,
+      price: finalPrice, // Sử dụng giá đã tính toán
+      count: quantity,
+      color: hasColor ? selectedColor : null,
+      size: hasSize ? selectedAttributes["Size"] : null,
+      type: hasType ? selectedAttributes["Type"] : null,
+      category_id: product.category.current.id,
+      stock: product.product.stock,
+      seller_id: product.product.seller_id,
+    };
+
+    // Lấy tên shop an toàn
+    const shopName =
+      product.profile_shop?.shop_name ||
+      product.seller_info?.shop?.shop_name ||
+      "Unknown Shop";
+
+    // Dispatch action addToCart với thông tin cần thiết
     dispatch(
       addToCart({
-        item: {
-          ...product,
-          price: price,
-          count: quantity,
-          size: hasSize ? size?.size_value : null,
-          color: hasColor ? selectedColor?.color_value : null,
-          type: hasType ? type?.type_value : null,
-        },
-        sellerId: product.seller_id,
-        shopName: product.profile_shop.shop_name,
+        item: cartItem,
+        sellerId: product.product.seller_id,
+        shopName: shopName,
       })
     );
+
+    Toast.fire({
+      icon: "success",
+      title: "Đã thêm sản phẩm vào giỏ hàng!",
+    });
   };
 
   const decreaseQuantity = (index) => {
@@ -301,113 +364,233 @@ export default function ProductDetail() {
       setShippingCost(0); // Không có item => phí vận chuyển là 0
     }
   }, [cartItems]);
+
+  // Tìm thuộc tính Color trong template_info.attributes
+  const colorAttribute = product?.template_info?.attributes?.find(
+    (attr) => attr.name === "Color"
+  );
+
+  const handleAttributeChange = (attributeName, value) => {
+    const newAttributes = {
+      ...selectedAttributes,
+      [attributeName]: value,
+    };
+    setSelectedAttributes(newAttributes);
+
+    // Tìm variant phù hợp với tất cả các thuộc tính đã chọn
+    const matchingVariant = product?.variants?.find((variant) => {
+      // Kiểm tra xem tất cả các thuộc tính đã chọn có khớp với variant không
+      return variant.attributes.every((attr) => {
+        // Nếu thuộc tính này chưa được chọn, bỏ qua việc so sánh
+        if (!newAttributes[attr.name]) return true;
+        // So sánh giá trị thuộc tính
+        return newAttributes[attr.name] === attr.value;
+      });
+    });
+
+    if (matchingVariant) {
+      // Nếu tìm thấy variant phù hợp
+      setSelectedVariant(matchingVariant);
+      // Cập nhật giá
+      setPrice(parseFloat(matchingVariant.price));
+      // Cập nhật hình ảnh nếu variant có hình
+      if (matchingVariant.image) {
+        setSelectedVariantImage(matchingVariant.image);
+      } else {
+        // Nếu variant không có hình, sử dụng hình mặc định
+        setSelectedVariantImage(null);
+      }
+    } else {
+      // Nếu không tìm thấy variant phù hợp, sử dụng giá và hình mặc định
+      setSelectedVariant(null);
+      setPrice(parseFloat(product.pricing.base_price));
+      setSelectedVariantImage(null);
+    }
+  };
+
+  const updatePrice = (variant) => {
+    if (!variant) return;
+
+    const variantPrice = parseFloat(variant.price);
+    setPrice(variantPrice);
+
+    if (product?.pricing?.discount_info) {
+      const discountValue = product.pricing.discount_info.discount_value;
+      const discountedPrice = variantPrice * (1 - discountValue / 100);
+      setPriceSale(discountedPrice);
+    }
+  };
+
+  // Tìm thuộc tính Size và Type
+  const sizeAttribute = product?.template_info?.attributes?.find(
+    (attr) => attr.name === "Size"
+  );
+
+  const typeAttribute = product?.template_info?.attributes?.find(
+    (attr) => attr.name === "Type"
+  );
+
+  const calculatePrice = (product, selectedVariant, selectedColor) => {
+    let basePrice = selectedVariant
+      ? parseFloat(selectedVariant.price)
+      : parseFloat(product.pricing.base_price);
+    let discountValue = 0;
+
+    if (selectedVariant && selectedColor && selectedColor.discount_info) {
+      // Áp dụng khuyến mãi theo màu sắc nếu có
+      discountValue = selectedColor.discount_info.discount_value;
+    } else if (product.pricing.discount_info) {
+      // Áp dụng khuyến mãi chung nếu có
+      discountValue = product.pricing.discount_info.discount_value;
+    }
+
+    const finalPrice = basePrice * (1 - discountValue / 100);
+    return finalPrice.toFixed(2);
+  };
+
   return (
     <section className="content py-5">
       <div className="container">
         <div className="product-main-content">
           <div className="row">
             <div className="col-12 col-md-7 col-lg-7">
-              <img
-                src={
-                  mainImage
-                    ? product.image instanceof File
-                      ? URL.createObjectURL(product.image)
-                      : product.image?.startsWith("http")
-                      ? product.image
-                      : urlImage + product.image
-                    : ""
-                }
-                className="d-block w-100"
-                alt="ProductImage1"
-              />
-              {loading ? (
+              <div
+                className="d-block product-image-container"
+                style={{
+                  width: "75%",
+                  paddingBottom: "75%", // Tạo tỷ lệ khung hình 1:1
+                  position: "relative",
+                  margin: "auto",
+                }}
+              >
+                <img
+                  src={
+                    selectedVariantImage
+                      ? selectedVariantImage instanceof File
+                        ? URL.createObjectURL(selectedVariantImage)
+                        : selectedVariantImage.startsWith("http")
+                        ? selectedVariantImage
+                        : urlImage + selectedVariantImage
+                      : mainImage
+                      ? mainImage instanceof File
+                        ? URL.createObjectURL(mainImage)
+                        : mainImage.startsWith("http")
+                        ? mainImage
+                        : urlImage + mainImage
+                      : ""
+                  }
+                  className="d-block product-detail-image"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                  alt={product?.product?.name || "Product Image"}
+                />
+              </div>
+
+              {productId ? (
+                <ProductRelated productId={productId} />
+              ) : (
                 <div className="text-center">
                   <div className="spinner-border" role="status"></div>
                 </div>
-              ) : (
-                <ProductRelated
-                  productId={product && product.id ? product.id : ""}
-                />
               )}
-              {loading ? (
-                <div className="text-center">
-                  <div className="spinner-border" role="status"></div>
-                </div>
-              ) : (
-                <ProductSameSeller
-                  productId={product && product.id ? product.id : ""}
-                />
-              )}
+
+              <ProductSameSeller productId={productId} />
             </div>
 
             <div className="col-md-5 col-12 col-lg-5">
               <div className="d-flex flex-column mb-3 product-info">
                 <div className="p-2 product-title">
-                  {product && product.name ? product.name : ""}
+                  {product && product.product.name ? product.product.name : ""}
                 </div>
 
                 <div className="p-2">
                   {product ? (
                     <>
-                      {product.sale ? (
-                        <>
-                          <span className="pricesale me-2">
-                            $
-                            {parseFloat(
-                              price -
-                                (price * product.sale.discount_value) / 100
-                            ).toFixed(2)}
-                          </span>
-                          <span className="price">${price}</span>
-                        </>
-                      ) : (
-                        <span className="pricesale me-2">${price}</span>
-                      )}
+                      <span className="pricesale me-2">
+                        $
+                        {calculatePrice(
+                          product,
+                          selectedVariant,
+                          selectedColor
+                        )}
+                      </span>
+                      <span className="price">
+                        $
+                        {selectedVariant
+                          ? selectedVariant.price
+                          : product.pricing.base_price}
+                      </span>
                     </>
                   ) : null}
                 </div>
                 <div className="p-2 discount-name">
-                  {product && product.sale
-                    ? `${product.sale && product.sale.discount_value}% OFF - ${
-                        product.sale && product.sale.discount_name
-                      } `
+                  {product && product.pricing.discount_info
+                    ? `${product.pricing.discount_info.discount_value}% OFF - ${product.pricing.discount_info.discount_name} `
                     : ""}
                 </div>
-                {product && product.colors && product.colors.length > 0 && (
+                {colorAttribute && (
                   <>
                     <div className="p-2 color-product">
-                      {selectedColor
-                        ? "Color: " + selectedColor.color_value
-                        : "Color"}
+                      {selectedColor ? `Color: ${selectedColor}` : "Color"}
                     </div>
                     <div className="p-2 color-product">
                       <div className="color-container">
-                        {product.colors.map((color) => (
-                          <div
-                            key={color.id}
-                            className="color-option position-relative"
-                            onClick={() => handleColorSelect(color)}
-                          >
+                        {colorAttribute.values.map((color) => {
+                          // Tìm màu tương ứng trong ColorOptions
+                          const colorOption = ColorOptions.find(
+                            (option) =>
+                              option.label.toLowerCase() === color.toLowerCase()
+                          );
+
+                          return (
                             <div
-                              style={{
-                                backgroundColor: color.color_code,
+                              key={color}
+                              className={`color-option position-relative ${
+                                selectedColor === color ? "active" : ""
+                              }`}
+                              onClick={() => {
+                                setSelectedColor(color);
+                                handleAttributeChange("Color", color);
                               }}
-                              className="color-circle border border-dark"
-                            />
-                            {selectedColor?.id === color.id && (
-                              <i
-                                className="fa-solid fa-check position-absolute top-50 start-50 translate-middle"
-                                style={{ color: "#fff" }}
-                              ></i>
-                            )}
-                          </div>
-                        ))}
+                            >
+                              <div
+                                style={{
+                                  backgroundColor: colorOption
+                                    ? colorOption.value
+                                    : "#FFFFFF",
+                                  border:
+                                    colorOption?.value === "#FFFFFF"
+                                      ? "1px solid #ddd"
+                                      : "none",
+                                }}
+                                className="color-circle border border-dark"
+                              />
+                              {selectedColor === color && (
+                                <i
+                                  className="fa-solid fa-check position-absolute top-50 start-50 translate-middle"
+                                  style={{
+                                    color:
+                                      colorOption?.value === "#FFFFFF"
+                                        ? "#000"
+                                        : "#fff",
+                                  }}
+                                ></i>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </>
                 )}
 
-                {product && product.sizes && product.sizes.length > 0 && (
+                {sizeAttribute && (
                   <div className="p-2 type-product">
                     <div className="container-style">
                       <div className="d-flex">
@@ -417,13 +600,15 @@ export default function ProductDetail() {
                         <div className="dropdown-wrapper">
                           <div className="dropdown rounded-pill">
                             <select
-                              value={size ? size.size_value : ""}
-                              onChange={handleSizeChange}
+                              value={selectedAttributes["Size"] || ""}
+                              onChange={(e) =>
+                                handleAttributeChange("Size", e.target.value)
+                              }
                             >
                               <option value="">Choose a size</option>
-                              {product.sizes.map((size) => (
-                                <option key={size.id} value={size.size_value}>
-                                  {size.size_value} (${size.price || price})
+                              {sizeAttribute.values.map((size) => (
+                                <option key={size} value={size}>
+                                  {size}
                                 </option>
                               ))}
                             </select>
@@ -434,7 +619,8 @@ export default function ProductDetail() {
                     </div>
                   </div>
                 )}
-                {product && product.types && product.types.length > 0 && (
+
+                {typeAttribute && (
                   <div className="p-2 type-product">
                     <div className="container-style">
                       <div className="d-flex">
@@ -444,13 +630,15 @@ export default function ProductDetail() {
                         <div className="dropdown-wrapper">
                           <div className="dropdown rounded-pill">
                             <select
-                              value={type ? type.type_value : ""}
-                              onChange={handleTypeChange}
+                              value={selectedAttributes["Type"] || ""}
+                              onChange={(e) =>
+                                handleAttributeChange("Type", e.target.value)
+                              }
                             >
                               <option value="">Choose a type</option>
-                              {product.types.map((type) => (
-                                <option key={type.id} value={type.type_value}>
-                                  {type.type_value}
+                              {typeAttribute.values.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
                                 </option>
                               ))}
                             </select>
@@ -483,12 +671,12 @@ export default function ProductDetail() {
                           onChange={handleQuantityChange}
                           min="1"
                           id="qty"
-                          max={product?.stock || 1}
+                          max={product?.product?.stock || 1}
                         />
                         <button
                           type="button"
                           onClick={handleIncrease}
-                          disabled={quantity >= (product?.stock || 1)}
+                          disabled={quantity >= (product?.product?.stock || 1)}
                         >
                           +
                         </button>
@@ -503,7 +691,7 @@ export default function ProductDetail() {
                     <div className="col-sm-10 d-flex justify-content-center">
                       {" "}
                       <button
-                        onClick={handleAddToCart}
+                        onClick={() => handleAddToCart()}
                         className="add-to-cart-btn"
                         data-bs-toggle="modal"
                         data-bs-target="#cartModal"
@@ -1245,9 +1433,9 @@ export default function ProductDetail() {
                                     </button>
                                   </div>
                                   <div className="col-6">
-                                    <button className="btn btn-primary">
+                                    <Link to="/cart" className="btn btn-primary">
                                       View cart
-                                    </button>
+                                    </Link>
                                   </div>
                                 </div>
                               </div>
@@ -1283,32 +1471,11 @@ export default function ProductDetail() {
                         <th>Categories</th>
                         <td>
                           <Link to="#">
-                            {product &&
-                              product.category &&
-                              product.category.parent && (
-                                <span>
-                                  {product.category &&
-                                    product.category.parent && (
-                                      <>
-                                        <span>
-                                          {product.category &&
-                                          product.category.parent &&
-                                          product.category.parent.name
-                                            ? product.category.parent.name
-                                            : ""}
-                                        </span>
-                                        <span className="mx-1">&gt;</span>
-                                      </>
-                                    )}
-                                  <span>
-                                    {product &&
-                                    product.category &&
-                                    product.category.name
-                                      ? product.category.name
-                                      : ""}
-                                  </span>
-                                </span>
-                              )}
+                            {product?.category?.hierarchy ? (
+                              <span>{product.category.hierarchy}</span>
+                            ) : (
+                              <span>Uncategorized</span>
+                            )}
                           </Link>
                         </td>
                       </tr>
@@ -1324,8 +1491,10 @@ export default function ProductDetail() {
                       }`}
                       dangerouslySetInnerHTML={{
                         __html:
-                          product && product.description
-                            ? product.description
+                          product &&
+                          product.product &&
+                          product.product.description
+                            ? product.product.description
                             : "",
                       }}
                     />
@@ -1383,9 +1552,10 @@ export default function ProductDetail() {
                           alt="Cartoon character holding a drink with the text 'CRAIC' below"
                           src={
                             product &&
-                            product.profile_shop &&
-                            urlImage + product.profile_shop.logo_url
-                              ? urlImage + product.profile_shop.logo_url
+                            product.seller_info &&
+                            product.seller_info.shop &&
+                            urlImage + product.seller_info.shop.logo_url
+                              ? urlImage + product.seller_info.shop.logo_url
                               : ""
                           }
                         />
@@ -1396,11 +1566,14 @@ export default function ProductDetail() {
                             Designed and sold by
                           </div>
                           <div className="name">
-                            <Link to={`/shop/${product?.seller_id}`}>
+                            <Link
+                              to={`/shop/${product?.seller_info?.seller?.id}`}
+                            >
                               {product &&
-                              product.profile_shop &&
-                              product.profile_shop.shop_name
-                                ? product.profile_shop.shop_name
+                              product.seller_info &&
+                              product.seller_info.shop &&
+                              product.seller_info.shop.shop_name
+                                ? product.seller_info.shop.shop_name
                                 : ""}
                             </Link>
                           </div>
@@ -1417,9 +1590,7 @@ export default function ProductDetail() {
                       <div className="spinner-border" role="status"></div>
                     </div>
                   ) : (
-                    <ProductRelatedMobile
-                      productId={product && product.id ? product.id : ""}
-                    />
+                    <ProductRelatedMobile productId={productId} />
                   )}
                 </div>
 
@@ -1429,9 +1600,7 @@ export default function ProductDetail() {
                       <div className="spinner-border" role="status"></div>
                     </div>
                   ) : (
-                    <ProductSameSellerMobile
-                      productId={product && product.id ? product.id : ""}
-                    />
+                    <ProductSameSellerMobile productId={productId} />
                   )}
                 </div>
                 <h2 className="product-title mt-4">Explore related searches</h2>

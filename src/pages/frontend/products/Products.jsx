@@ -92,7 +92,7 @@ export default function Products() {
 
         {!error && products.length === 0 && (
           <div className="alert alert-info text-center" role="alert">
-            Không có sản phẩm nào
+            <p>Không có sản phẩm nào</p>
           </div>
         )}
       </div>

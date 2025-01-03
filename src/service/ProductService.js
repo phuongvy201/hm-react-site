@@ -11,7 +11,7 @@ const productService = {
     return httpAxios.get(`/products/recently-viewed/${customerId}`);
   },
   getProductDetailBySlug: (slug) => {
-    return httpAxios.get(`/products/slug/${slug}`);
+    return httpAxios.get(`/products-detail/${slug}`);
   },
   getRelatedProducts: (productId) => {
     return httpAxios.get(`/products/related/${productId}`);

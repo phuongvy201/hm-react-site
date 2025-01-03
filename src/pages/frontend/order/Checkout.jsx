@@ -479,13 +479,13 @@ export default function Checkout() {
                                     quantity: item.count, // Số lượng
                                     price: parseFloat(item.price) || 0, // Giá của từng sản phẩm
                                     attributes: {
-                                      color: item.color || null, // Thuộc tính màu sắcp
-                                      size: item.size || null, 
-                                      type: item.type || null,
+                                      color: item.color || null, // Lấy giá trị màu từ đối tượng color
+                                      size: item.size || null, // Giá trị size trực tiếp
+                                      type: item.type || null, // Giá trị type trực tiếp
                                     },
                                   })),
                                   shipping: {
-                                    shipping_method: "standard", // Phương thức giao hàng
+                                    shipping_method: "standard",
                                     first_name: formData.firstName,
                                     last_name: formData.lastName,
                                     phone: formData.phone,
@@ -494,24 +494,45 @@ export default function Checkout() {
                                     country: formData.country,
                                     city: formData.city,
                                     zip_code: formData.zipCode,
-                                    shipping_cost: shippingCost, // Chi phí vận chuyển
+                                    shipping_cost: shippingCost,
                                     shipping_notes:
-                                      formData.shippingNotes || "", // Ghi chú vận chuyển (nếu có)
+                                      formData.shippingNotes || "",
                                   },
                                 };
 
-                                // Gửi yêu cầu tạo đơn hàng
-                                const orderResponse =
-                                  await orderService.createOrder(orderData);
+                                // Log dữ liệu trước khi gửi
+                                console.log("OrderData being sent:", orderData);
+                                console.log("Seller Items:", sellerItems);
+                                console.log("Form Data:", formData);
+                                console.log("User Info:", user);
 
-                                // Kiểm tra phản hồi từ server
-                                if (!orderResponse.data.success) {
-                                  throw new Error(
-                                    `Không thể tạo đơn hàng cho người bán ${sellerId}: ${orderResponse.data.message}`
-                                  );
+                                try {
+                                  // Gửi yêu cầu tạo đơn hàng
+                                  const orderResponse =
+                                    await orderService.createOrder(orderData);
+                                  console.log("orderResponse", orderResponse);
+                                  // Log response nếu không thành công
+                                  // if (!orderResponse.data.success) {
+                                  //   console.error(
+                                  //     "Order creation failed:",
+                                  //     orderResponse.data
+                                  //   );
+                                  //   throw new Error(
+                                  //     `Không thể tạo đơn hàng cho người bán ${sellerId}: ${orderResponse.data.message}`
+                                  //   );
+                                  // }
+
+                                  return orderResponse.data.order;
+                                } catch (error) {
+                                  // Log chi tiết lỗi
+                                  console.error("Error creating order:", {
+                                    error: error.response?.data || error,
+                                    status: error.response?.status,
+                                    validationErrors:
+                                      error.response?.data?.errors,
+                                  });
+                                  throw error;
                                 }
-
-                                return orderResponse.data.order;
                               }
                             )
                           );

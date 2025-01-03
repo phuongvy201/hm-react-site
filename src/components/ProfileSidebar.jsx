@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import customerService from "../service/CustomerService";
 import { urlImage } from "../config";
+import avatarDefault from "../assets/imgs/—Pngtree—cartoon hand drawn default avatar_7127563.png";
 import authService from "../service/AuthService";
 export default function ProfileSidebar() {
   const [customer, setCustomer] = useState(null);
@@ -47,7 +48,7 @@ export default function ProfileSidebar() {
           <img
             alt="Profilepicture of Phuong Vi"
             height={40}
-            src={urlImage + customer?.avatar}
+            src={customer?.avatar ? urlImage + customer?.avatar : avatarDefault}
             width={40}
           />
           <span className="name"> {customer?.name} </span>

@@ -169,7 +169,10 @@ export default function MyAccount() {
                     <div>
                       <div className="mb-1">
                         <img
-                          src={cropData || urlImage + avatar}
+                          src={
+                            cropData ||
+                            (avatar ? urlImage + avatar : avatarDefault)
+                          }
                           alt="cropped"
                           className="img-fluid mt-2"
                           style={{

@@ -363,7 +363,7 @@ const Header = () => {
                 </div>
               </div>
             </form>
-            <div className="header-quicklink col-4 col-md-2 col-lg-2 row">
+            <div className="header-quicklink col-4 col-md-2 col-lg-2 row justify-content-center">
               {/* Account Icon with dropdown menu */}
               {/* <div className="col-lg-4 order-tracking">
                 <div className="text-center position-relative">
