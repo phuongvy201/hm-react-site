@@ -27,7 +27,7 @@ export default function PostCard({ post }) {
             className="text-decoration-none btn-title-topic text-success"
             to="#"
           >
-            {post.topic.name}
+            {post?.topic?.name}
           </Link>
         </div>
       </div>

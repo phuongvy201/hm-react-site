@@ -17,7 +17,7 @@ export default function Cart() {
     phone: "",
     email: "",
     address: "",
-    country: "",
+    country: "united-states",
     city: "",
     zipCode: "",
     shippingNotes: "",
@@ -470,7 +470,7 @@ export default function Cart() {
                     </div>
                     <div className="select-container-country">
                       <select
-                        value={formData.country}
+                        value={formData.country || "united-states"}
                         onChange={(e) =>
                           setFormData({ ...formData, country: e.target.value })
                         }

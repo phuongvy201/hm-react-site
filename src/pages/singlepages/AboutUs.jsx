@@ -1,15 +1,16 @@
 import React from "react";
 
 export default function AboutUs() {
+  
   return (
     <div className="about-us-section">
+
       {/* Hero Banner Section */}
       <div className="about-hero-banner">
         <img
           src="https://cdn.printerval.com/unsafe/1500x0/printerval.com/assets/images/about-page/cover-about-us.jpg"
           alt="About Bluprinter"
         />
-        
       </div>
       {/* About Content */}
       <div className="about-content">
@@ -626,9 +627,7 @@ export default function AboutUs() {
                 </div>
                 <div className="info">
                   <span>Email:</span>
-                  <a href="mailto:admin@bluprinter.com">
-                    admin@bluprinter.com
-                  </a>
+                  <a href="mailto:admin@bluprinter.com">admin@bluprinter.com</a>
                 </div>
               </div>
               {/* Phone Numbers */}

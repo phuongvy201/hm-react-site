@@ -16,8 +16,8 @@ const postService = {
   getPostBySlug: (slug) => {
     return httpAxios.get(`/post/slug/${slug}`);
   },
-  getRelatedPosts: (postId) => {
-    return httpAxios.get(`/posts/related/${postId}`);
+  getRelatedPosts: (slug) => {
+    return httpAxios.get(`/posts/related/${slug}`);
   },
   getPages: () => {
     return httpAxios.get(`/posts/pages`);

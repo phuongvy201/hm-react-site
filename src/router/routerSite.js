@@ -16,6 +16,13 @@ import Products from "./../pages/frontend/products/Products";
 import Search from "../pages/frontend/products/Search";
 import OrderSuccess from "../pages/frontend/order/OrderSuccess";
 import AboutUs from "../pages/singlepages/AboutUs";
+import ShippingDelivery from "../pages/singlepages/ShippingDelivery";
+import SecurityPayment from "../pages/singlepages/SecurityPayment";
+import ContactUs from "../pages/singlepages/ContactUs";
+import HelpCenter from "../pages/singlepages/HelpCenter";
+import TrackOrder from "../pages/singlepages/OrderTracking";
+import BulkOrder from "../pages/singlepages/BulkOrder";
+import PromoCode from "../pages/singlepages/PromoCode";
 const routerSite = [
   { path: "/", component: Home },
   { path: "/product/:slug", component: ProductDetail },
@@ -35,6 +42,13 @@ const routerSite = [
   { path: "/search", component: Search },
   { path: "/thank-you", component: OrderSuccess },
   { path: "/about-us", component: AboutUs },
+  { path: "/shipping-delivery", component: ShippingDelivery },
+  { path: "/security-payment", component: SecurityPayment },
+  { path: "/contact-us", component: ContactUs },
+  { path: "/help-center", component: HelpCenter },
+  { path: "/order-tracking", component: TrackOrder },
+  { path: "/bulk-order", component: BulkOrder },
+  { path: "/promo-code", component: PromoCode },
 ];
 
 export default routerSite;

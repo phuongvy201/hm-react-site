@@ -5,6 +5,7 @@ import { urlImage } from "../../../config";
 
 export default function BlogList() {
   const [posts, setPosts] = useState([]);
+  const [topic, setTopic] = useState([]);
   const [latestPosts, setLatestPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const { slug } = useParams();
@@ -17,8 +18,10 @@ export default function BlogList() {
       const response = await postService.getPostsByTopic(slug, currentPage);
       if (response.data.success) {
         setPosts(response.data.data.items);
+        setTopic(response.data.data.topic);
         setTotalPages(response.data.data.pagination.last_page);
       }
+      console.log("response", response);
     } catch (err) {
       setError("Không thể tải danh sách bài viết");
       console.error("Error:", err);
@@ -99,7 +102,7 @@ export default function BlogList() {
     <div className="container py-5">
       <div className="container-blog">
         <div className="row">
-          <h4 className="gift-title ">Gift Ideas</h4>
+          <h4 className="gift-title ">{topic.name}</h4>
           <div className="col-12 col-md-8 col-lg-8 row my-3">
             {posts.map((post) => (
               <div className="col-6 col-md-6 col-lg-4">
@@ -113,7 +116,7 @@ export default function BlogList() {
                     />
                     <div className="gift-card-content">
                       <div className="gift-category">
-                        <Link to={`/blog/${post.topic.slug}`}>
+                        <Link to={`/topic/${post.topic.slug}`}>
                           {post.topic.name}
                         </Link>
                       </div>

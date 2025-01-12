@@ -17,9 +17,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [size, setSize] = useState("");
   const [price, setPrice] = useState(0);
-  const [priceSize, setPriceSize] = useState(0);
   const [priceSale, setPriceSale] = useState(0);
   const { slug } = useParams();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -36,6 +34,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [selectedVariantImage, setSelectedVariantImage] = useState(null);
   const [selectedAttributes, setSelectedAttributes] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isFormValid = () => {
     return (
@@ -57,7 +56,7 @@ export default function ProductDetail() {
     phone: "",
     email: "",
     address: "",
-    country: "",
+    country: "united-states",
     city: "",
     zipCode: "",
     shippingNotes: "",
@@ -87,14 +86,6 @@ export default function ProductDetail() {
     setQuantity(Math.min(Math.max(1, value), product?.product?.stock || 1));
   };
 
-  const handleColorSelect = (color) => {
-    setSelectedColor(color);
-    if (color.image) {
-      setMainImage(color.image);
-    } else {
-      setMainImage(product?.product?.image);
-    }
-  };
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -146,49 +137,6 @@ export default function ProductDetail() {
     }
   }, [selectedVariant]);
 
-  const handleTypeChange = (e) => {
-    const selectedType = product.types.find(
-      (type) => type.type_value === e.target.value
-    );
-    setType(selectedType);
-
-    // Cập nhật giá khi thay đổi type
-    if (selectedType) {
-      // Tính giá mới từ giá ban đầu cộng với giá của loại đã chọn và giá của kích thước đã chọn
-      const newPrice =
-        parseFloat(product.price) +
-        (size ? parseFloat(size.price) : 0) +
-        parseFloat(selectedType.price);
-      setPrice(newPrice);
-    } else {
-      // Nếu không có loại nào được chọn, giữ giá bằng giá gốc cộng với giá của kích thước đã chọn
-      const newPrice =
-        parseFloat(product.price) + (size ? parseFloat(size.price) : 0);
-      setPrice(newPrice);
-    }
-  };
-  const handleSizeChange = (e) => {
-    const selectedSize = product.sizes.find(
-      (size) => size.size_value === e.target.value
-    );
-    setSize(selectedSize);
-
-    // Cập nhật giá khi thay đổi size
-    if (selectedSize) {
-      // Tính giá mới từ giá ban đầu cộng với giá của kích thước đã chọn và giá của loại đã chọn
-      const newPrice =
-        parseFloat(product.price) +
-        parseFloat(selectedSize.price) +
-        (type ? parseFloat(type.price) : 0);
-      setPrice(newPrice);
-    } else {
-      // Nếu không có kích thước nào được chọn, giữ giá bằng giá gốc cộng với giá của loại đã chọn
-      const newPrice =
-        parseFloat(product.price) + (type ? parseFloat(type.price) : 0);
-      setPrice(newPrice);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -215,25 +163,25 @@ export default function ProductDetail() {
     if (hasColor && !selectedColor) {
       Toast.fire({
         icon: "error",
-        title: "Vui lòng chọn màu sắc trước khi thêm vào giỏ hàng!",
+        title: "Please select a color before adding to cart!",
       });
-      return; // Ngăn chặn mở modal
+      return;
     }
 
     if (hasSize && !selectedAttributes["Size"]) {
       Toast.fire({
         icon: "error",
-        title: "Vui lòng chọn kích thước trước khi thêm vào giỏ hàng!",
+        title: "Please select a size before adding to cart!",
       });
-      return; // Ngăn chặn mở modal
+      return;
     }
 
     if (hasType && !selectedAttributes["Type"]) {
       Toast.fire({
         icon: "error",
-        title: "Vui lòng chọn loại trước khi thêm vào giỏ hàng!",
+        title: "Please select a type before adding to cart!",
       });
-      return; // Ngăn chặn mở modal
+      return;
     }
 
     // Tính toán giá sản phẩm
@@ -295,37 +243,23 @@ export default function ProductDetail() {
 
     Toast.fire({
       icon: "success",
-      title: "Đã thêm sản phẩm vào giỏ hàng!",
+      title: "Product added to cart!",
     });
   };
 
-  const decreaseQuantity = (index) => {
-    dispatch(decreaseQuantity(index));
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
-  const increaseQuantity = (index) => {
-    dispatch(increaseQuantity(index));
-  };
-
-  const removeItem = (index) => {
-    dispatch(removeItem(index));
-  };
   const handleCheckout = (e) => {
-    if (!isFormValid()) {
-      e.preventDefault();
-      Toast.fire({
-        icon: "error",
-        title: "Please fill in the order information before checking out!",
-      });
-      return;
-    }
-
+    e.preventDefault();
+    closeModal();
     navigate("/checkout", {
       state: {
-        cartItems, // Truyền giỏ hàng
-        shippingCost, // Phí vận chuyển
-        total: total,
-        totalAmount: total + shippingCost, // Tính tổng tiền
+        cartItems,
+        shippingCost,
+        total,
+        totalAmount: total + shippingCost,
         formData: formData,
       },
     });
@@ -408,19 +342,6 @@ export default function ProductDetail() {
     }
   };
 
-  const updatePrice = (variant) => {
-    if (!variant) return;
-
-    const variantPrice = parseFloat(variant.price);
-    setPrice(variantPrice);
-
-    if (product?.pricing?.discount_info) {
-      const discountValue = product.pricing.discount_info.discount_value;
-      const discountedPrice = variantPrice * (1 - discountValue / 100);
-      setPriceSale(discountedPrice);
-    }
-  };
-
   // Tìm thuộc tính Size và Type
   const sizeAttribute = product?.template_info?.attributes?.find(
     (attr) => attr.name === "Size"
@@ -499,8 +420,7 @@ export default function ProductDetail() {
                   <div className="spinner-border" role="status"></div>
                 </div>
               )}
-
-              <ProductSameSeller productId={productId} />
+              {productId && <ProductSameSeller productId={productId} />}
             </div>
 
             <div className="col-md-5 col-12 col-lg-5">
@@ -510,7 +430,7 @@ export default function ProductDetail() {
                 </div>
 
                 <div className="p-2">
-                  {product ? (
+                  {product?.pricing?.discount_info ? (
                     <>
                       <span className="pricesale me-2">
                         $
@@ -524,15 +444,21 @@ export default function ProductDetail() {
                         $
                         {selectedVariant
                           ? selectedVariant.price
-                          : product.pricing.base_price}
+                          : product?.pricing?.base_price}
                       </span>
                     </>
-                  ) : null}
+                  ) : (
+                    <span className="pricesale me-2">
+                      ${" "}
+                      {selectedVariant
+                        ? Number(selectedVariant?.price || 0).toFixed(2)
+                        : Number(product?.pricing?.base_price || 0).toFixed(2)}
+                    </span>
+                  )}
                 </div>
                 <div className="p-2 discount-name">
-                  {product && product.pricing.discount_info
-                    ? `${product.pricing.discount_info.discount_value}% OFF - ${product.pricing.discount_info.discount_name} `
-                    : ""}
+                  {product?.pricing?.discount_info &&
+                    `${product.pricing.discount_info.discount_value}% OFF - ${product.pricing.discount_info.discount_name} `}
                 </div>
                 {colorAttribute && (
                   <>
@@ -836,7 +762,10 @@ export default function ProductDetail() {
                                         </div>
                                         <div className="select-container-country">
                                           <select
-                                            value={formData.country}
+                                            value={
+                                              formData.country ||
+                                              "united-states"
+                                            }
                                             onChange={(e) =>
                                               setFormData({
                                                 ...formData,
@@ -1428,14 +1357,19 @@ export default function ProductDetail() {
                                     <button
                                       className="btn btn-danger"
                                       onClick={handleCheckout}
+                                      data-bs-dismiss="modal"
                                     >
                                       Checkout
                                     </button>
                                   </div>
                                   <div className="col-6">
-                                    <Link to="/cart" className="btn btn-primary">
+                                    <button
+                                      onClick={() => navigate("/cart")}
+                                      data-bs-dismiss="modal"
+                                      className="btn btn-primary"
+                                    >
                                       View cart
-                                    </Link>
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -1455,10 +1389,10 @@ export default function ProductDetail() {
                       width={50}
                     />
                     <div className="guarantee-text">
-                      Don’t love it? We’ll fix it. For free.
+                      Don't love it? We'll fix it. For free.
                       <br />
                       <Link to="#" className="guarentee-link">
-                        Printverval Guarantee
+                        Bluprinter Guarantee
                       </Link>
                     </div>
                   </div>
@@ -1590,7 +1524,7 @@ export default function ProductDetail() {
                       <div className="spinner-border" role="status"></div>
                     </div>
                   ) : (
-                    <ProductRelatedMobile productId={productId} />
+                    productId && <ProductRelatedMobile productId={productId} />
                   )}
                 </div>
 
@@ -1600,7 +1534,9 @@ export default function ProductDetail() {
                       <div className="spinner-border" role="status"></div>
                     </div>
                   ) : (
-                    <ProductSameSellerMobile productId={productId} />
+                    productId && (
+                      <ProductSameSellerMobile productId={productId} />
+                    )
                   )}
                 </div>
                 <h2 className="product-title mt-4">Explore related searches</h2>

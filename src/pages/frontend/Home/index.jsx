@@ -85,7 +85,7 @@ const Home = () => {
                   <div className="col-9 col-md-9 col-lg-12">
                     <div className="guarantee-title">Pre- or post-purchase</div>
                     <div className="guarantee-description">
-                      At Printerval, we put the customer first because we ensure
+                      At Bluprinter, we put the customer first because we ensure
                       the quality of the customer experience. Feel free to
                       contact us
                       <Link to="#">here</Link>, we are always available to
@@ -101,13 +101,13 @@ const Home = () => {
 
       <div className="container mt-4">
         <div className="printerval-fandom mt-3">
-          <h4 className="component-heading">#Printerval Fandom</h4>
+          <h4 className="component-heading">#Bluprinter Fandom</h4>
           <div className="row">
             <div className="col-6 col-md-6 col-lg-3 mt-3">
               <Link to="#">
                 <img
                   className="img-fluid rounded mt-2"
-                  src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2023/06/21/iap-640x640-7c90bbc1f8fa42daf13f79896facd4e2.jpg"
+                  src="https://i.etsystatic.com/iap/0ed2d6/6576098541/iap_300x300.6576098541_n1afl9rz.jpg?version=0"
                   alt=""
                 />
               </Link>
@@ -116,7 +116,7 @@ const Home = () => {
               <Link to="#">
                 <img
                   className="img-fluid rounded mt-2"
-                  src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2023/06/21/iap-640x640-7c90bbc1f8fa42daf13f79896facd4e2.jpg"
+                  src="https://i.etsystatic.com/iap/9dab84/6585628985/iap_300x300.6585628985_327ldb66.jpg?version=0"
                   alt=""
                 />
               </Link>
@@ -125,7 +125,7 @@ const Home = () => {
               <Link to="#">
                 <img
                   className="img-fluid rounded mt-2"
-                  src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2023/06/21/iap-640x640-7c90bbc1f8fa42daf13f79896facd4e2.jpg"
+                  src="https://i.etsystatic.com/iap/b56d5b/6524772236/iap_300x300.6524772236_k368u75a.jpg?version=0"
                   alt=""
                 />
               </Link>
@@ -134,7 +134,7 @@ const Home = () => {
               <Link to="#">
                 <img
                   className="img-fluid rounded mt-2"
-                  src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2023/06/21/iap-640x640-7c90bbc1f8fa42daf13f79896facd4e2.jpg"
+                  src="https://i.etsystatic.com/iap/d6ddac/5880841590/iap_600x600.5880841590_oa1pdae8.jpg?version=0"
                   alt=""
                 />
               </Link>
@@ -168,10 +168,10 @@ const Home = () => {
       >
         <div className="container pb-4">
           <p className="pt-5 ">
-            At Printerval, we embark on a journey fueled by a simple yet
+            At Bluprinter, we embark on a journey fueled by a simple yet
             profound mission: to ignite creativity and bring artists and
             customers together on a platform where imagination knows no bounds.
-            Established in the heart of Vietnam in 2021, Printerval swiftly
+            Established in the heart of Vietnam in 2021, Bluprinter swiftly
             emerged as a global online marketplace, championing the cause of
             independent artists and designers from all corners of the world.
           </p>
@@ -188,36 +188,36 @@ const Home = () => {
           <p>
             We believe in transparency, and that's why we provide you with an{" "}
             <Link to="#">order tracking system</Link> that allows you to stay in
-            the loop, every step of the way. With Printerval, you'll never
+            the loop, every step of the way. With Bluprinter, you'll never
             wonder where your order is. Real-time order monitoring is at your
             fingertips, ensuring you know exactly when to expect your carefully
             crafted creation.
           </p>
           <h2>Easy Refurns and Refunds - Your Satisfaction Matters</h2>
           <p>
-            Printerval's commitment to transparency extends to{" "}
+            Bluprinter's commitment to transparency extends to{" "}
             <Link to="#">our</Link> return and <Link to>refund policy</Link>.
             We've designed it to be straightforward and hassle-free. We
             understand that sometimes, things don't go as planned. In such
             cases, our clear refund process ensures that you're never left in
             the dark, because your satisfaction matters.
           </p>
-          <h2>Printerval Mobile App - Your Creative Companion</h2>
+          <h2>Bluprinter Mobile App - Your Creative Companion</h2>
           <p>
-            The Printerval Mobile App is not just an app; it's your creative
+            The Bluprinter Mobile App is not just an app; it's your creative
             companion. We've integrated innovation into every aspect to provide
             you with a seamless and enjoyable shopping experience. With
             personalized recommendations, easy customization options, exclusive
             offers, and timely alerts, the app transforms shopping into an
             adventure of self-expression.
             <br />
-            Download the Printerval Mobile App today and experience a world of
+            Download the Bluprinter Mobile App today and experience a world of
             inspiration at your fingertips:{" "}
             <Link to="#">iOS App | Android App</Link>
           </p>
           <h2>Customization Beyond Imagination - Your Unique Creations</h2>
           <p>
-            Empower your world with Printerval! Explore a diverse range of
+            Empower your world with Bluprinter! Explore a diverse range of
             customizable products that ignite your creativity. From
             one-of-a-kind T-shirts and cozy Hoodies to stylish Caps,{" "}
             <Link to="#">Mugs</Link>, and exquisite jewelry, we offer a plethora
@@ -237,7 +237,7 @@ const Home = () => {
             stylish covers, stepping out in trendy Shoes, pampering your pets
             with adorable Hoodies, wearing iconic Buckey Hats, adorning with
             vibrant Pin Buttons, or enhancing your workspace with practical
-            Mouse Pads and stylish Laptop Skins, Printerval brings your creative
+            Mouse Pads and stylish Laptop Skins, Bluprinter brings your creative
             vision to life. Explore, create, and inspire with us!
           </p>
           <h2>Easy Returns and Refunds - Your Satisfaction Matters</h2>

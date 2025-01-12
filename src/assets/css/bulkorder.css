@@ -1,0 +1,139 @@
+.hero-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+.hero-section img {
+  max-width: 100%;
+  height: auto;
+}
+.hero-text {
+  text-align: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+.hero-text h1 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+.hero-text p {
+  font-size: 1.2rem;
+}
+.hero-text .btn {
+  background-color: #ff6600;
+  color: white;
+  font-size: 1rem;
+  padding: 10px 20px;
+}
+.shipping-info {
+  text-align: right;
+  padding: 10px;
+  font-size: 0.9rem;
+}
+.breadcrumb {
+  background-color: transparent;
+  padding: 10px 0;
+}
+.order-info {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translateY(-50%);
+  background-color: #ff6600;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 1.2rem;
+}
+.contact-section {
+  text-align: center;
+  margin-top: 50px;
+}
+.contact-section h2 {
+  font-size: 24px;
+  font-weight: bold;
+}
+.contact-section .email-box {
+  display: inline-block;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+.contact-section .email-box i {
+  font-size: 24px;
+  margin-right: 10px;
+}
+.form-section {
+  background-color: #f8f9fa;
+  padding: 50px 0;
+}
+.form-section h3 {
+  font-size: 22px;
+  font-weight: bold;
+}
+.form-section p {
+  font-size: 16px;
+  color: #666;
+}
+.form-section .form-group {
+  margin-bottom: 20px;
+}
+.form-section .form-control {
+  height: 45px;
+}
+.form-section .btn-primary {
+  background-color: #343a40;
+  border-color: #343a40;
+  padding: 10px 30px;
+  font-size: 16px;
+}
+.form-section .btn-primary:hover {
+  background-color: #23272b;
+  border-color: #23272b;
+}
+.form-section .upload-file {
+  display: flex;
+  align-items: center;
+}
+.form-section .upload-file input[type="file"] {
+  display: none;
+}
+.form-section .upload-file label {
+  margin: 0;
+  padding: 10px 20px;
+  background-color: #343a40;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.form-section .upload-file span {
+  margin-left: 10px;
+  font-size: 14px;
+  color: #666;
+}
+.faq-section {
+  padding: 20px;
+}
+.faq-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+.faq-item {
+  margin-bottom: 20px;
+}
+.faq-question {
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.faq-answer {
+  margin-left: 20px;
+  display: none;
+}
+.faq-icon {
+  float: right;
+}

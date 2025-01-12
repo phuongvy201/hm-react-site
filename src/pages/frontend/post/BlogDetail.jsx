@@ -31,7 +31,7 @@ export default function BlogDetail() {
   };
   const fetchRelatedPosts = async (topicId) => {
     try {
-      const response = await postService.getRelatedPosts(topicId);
+      const response = await postService.getRelatedPosts(slug);
       if (response.data.success) {
         const filteredPosts = response.data.data.filter(
           (p) => p.id !== post.id
