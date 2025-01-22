@@ -4,14 +4,29 @@ import productService from "../../../service/ProductService";
 import { urlImage } from "../../../config";
 import ProductRelated from "./ProductRelated";
 import ProductRelatedMobile from "./ProductRelatedMobile";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import ProductSameSeller from "./ProductSameSeller";
 import ProductSameSellerMobile from "./ProductSameSellerMobile";
 import Swal from "sweetalert2";
 import { useAuth } from "../../../context/AuthContext";
+import "../../../assets/css/sizeguide.css";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../state/cartSlice";
 import orderService from "../../../service/OrderService";
 import { ColorOptions } from "../../../constants/productConstants";
+import {
+  decreaseCount,
+  increaseCount,
+  removeFromCart,
+} from "../../../state/cartSlice";
+import * as bootstrap from "bootstrap";
+import { Modal } from "bootstrap";
+import serverService from "../../../service/ServerService";
+import axios from "axios";
+import RecentlyViewedProducts from "./RecentlyViewedProducts";
+import RecentlyViewed from "./RecentlyViewed";
+import { productMeasurements, sizeCharts } from "../../../constants/sizeCharts";
 
 export default function ProductDetail() {
   const [product, setProduct] = useState(null);
@@ -27,14 +42,21 @@ export default function ProductDetail() {
   const [productId, setProductId] = useState(0);
   const [basePrice, setBasePrice] = useState(0);
   const { isAuthenticated } = useAuth();
+  const [ip, setIp] = useState("");
+  const [country, setCountry] = useState("");
+  const [deliveryStartDate, setDeliveryStartDate] = useState("");
+  const [deliveryEndDate, setDeliveryEndDate] = useState("");
+
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
   const [shippingCost, setShippingCost] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const navigate = useNavigate();
+
   const [selectedVariantImage, setSelectedVariantImage] = useState(null);
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(product?.product?.images[0]);
 
   const isFormValid = () => {
     return (
@@ -48,6 +70,7 @@ export default function ProductDetail() {
     );
   };
   const cart = localStorage.getItem("cart");
+
   const [type, setType] = useState("");
   const toggleText = () => setIsExpanded((prev) => !prev);
   const [formData, setFormData] = useState({
@@ -64,6 +87,7 @@ export default function ProductDetail() {
   });
 
   var cartItems = useSelector((state) => state.cart.sellers);
+  console.log("cartItems", cartItems);
 
   const total = cartItems.reduce((totalPrice, sellerGroup) => {
     return (
@@ -118,6 +142,18 @@ export default function ProductDetail() {
                 (productData.price * productData.sale.discount_value) / 100
             );
           }
+
+          // Lưu sản phẩm vào danh sách đã xem
+          saveToRecentlyViewed({
+            id: productData.product.id,
+            name: productData.product.name,
+            slug: productData.product.slug,
+            main_image: productData.product.main_image,
+            price: productData.product.base_price,
+            sale: productData.sale,
+            category_id: productData.category?.current?.id,
+            seller_id: productData.product.seller_id,
+          });
         }
       } catch (err) {
         setError("Unable to load product");
@@ -129,6 +165,34 @@ export default function ProductDetail() {
 
     fetchData();
   }, [slug]);
+  useEffect(() => {
+    const fetchIp = async () => {
+      try {
+        // Gọi API từ backend để lấy địa chỉ IP
+        const response = await serverService.getIp(); // Đảm bảo serverService có phương thức getIp
+        const clientIp = response.data.ip; // Lấy địa chỉ IP từ phản hồi
+        setIp(clientIp);
+        console.log("IP:", clientIp);
+        console.log("response", response);
+
+        // Thêm thời gian chờ trước khi gọi dịch vụ geolocation
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 giây
+
+        // Gọi dịch vụ geolocation để lấy thông tin quốc gia
+        const geoResponse = await axios.get(
+          `https://ipinfo.io/${clientIp}/json`
+        );
+        console.log("geoResponse", geoResponse);
+        setCountry(geoResponse.data.country); // Lưu quốc gia
+        console.log("Country:", geoResponse.data.country);
+      } catch (error) {
+        console.error("Error fetching IP or country:", error);
+      }
+    };
+
+    fetchIp();
+  }, []);
+
   useEffect(() => {
     if (selectedVariant?.image) {
       setSelectedVariantImage(selectedVariant.image);
@@ -189,33 +253,18 @@ export default function ProductDetail() {
 
     // Xử lý hình ảnh
     let productImage = "";
-    if (selectedVariantImage) {
-      if (selectedVariantImage instanceof File) {
-        productImage = URL.createObjectURL(selectedVariantImage);
-      } else if (selectedVariantImage.startsWith("data")) {
-        productImage = selectedVariantImage;
-      } else if (selectedVariantImage.startsWith("http")) {
-        productImage = selectedVariantImage;
-      } else {
-        productImage = urlImage + selectedVariantImage;
-      }
-    } else if (mainImage) {
-      if (mainImage instanceof File) {
-        productImage = URL.createObjectURL(mainImage);
-      } else if (mainImage.startsWith("data")) {
-        productImage = mainImage;
-      } else if (mainImage.startsWith("http")) {
-        productImage = mainImage;
-      } else {
-        productImage = urlImage + mainImage;
-      }
+    if (selectedVariant && selectedVariant.image) {
+      productImage = selectedVariant.image; // Lấy hình ảnh của variant nếu có
+    } else if (product.product.images.length > 0) {
+      productImage = urlImage + product.product.images[0]; // Lấy hình ảnh đầu tiên trong mảng images
     }
-
+    console.log("productImage", productImage);
     // Tạo item để thêm vào giỏ hàng
     const cartItem = {
       id: product.product.id,
       name: product.product.name,
       image: productImage,
+      slug: product.product.slug,
       price: finalPrice, // Sử dụng giá đã tính toán
       count: quantity,
       color: hasColor ? selectedColor : null,
@@ -253,7 +302,14 @@ export default function ProductDetail() {
 
   const handleCheckout = (e) => {
     e.preventDefault();
-    closeModal();
+
+    // Nếu form hợp lệ, đóng modal và chuyển trang
+    const modal = Modal.getInstance(document.getElementById("cartModal"));
+    if (modal) {
+      modal.hide();
+    }
+
+    // Sau khi đóng modal, chuyển sang trang checkout
     navigate("/checkout", {
       state: {
         cartItems,
@@ -298,6 +354,46 @@ export default function ProductDetail() {
       setShippingCost(0); // Không có item => phí vận chuyển là 0
     }
   }, [cartItems]);
+
+  useEffect(() => {
+    const calculateDeliveryDate = () => {
+      const currentDate = new Date();
+      const readyToShipInDays = 2; // 2 ngày chuẩn bị hàng
+
+      // Tính ngày chuẩn bị hàng
+      const readyDate = new Date(currentDate);
+      readyDate.setDate(currentDate.getDate() + readyToShipInDays);
+
+      let deliveryDaysMin, deliveryDaysMax;
+
+      if (country === "US") {
+        // Tính ngày giao hàng cho US
+        deliveryDaysMin = 7; // Tối thiểu 7 ngày
+        deliveryDaysMax = 13; // Tối đa 13 ngày
+      } else if (country === "VN") {
+        // Tính ngày giao hàng cho Việt Nam
+        deliveryDaysMin = 3; // Tối thiểu 3 ngày
+        deliveryDaysMax = 5; // Tối đa 5 ngày
+      } else {
+        // Tính ngày giao hàng cho các quốc gia khác
+        deliveryDaysMin = 15; // Tối thiểu 15 ngày
+        deliveryDaysMax = 18; // Tối đa 18 ngày
+      }
+
+      // Tính ngày giao hàng
+      const deliveryStartDate = new Date(readyDate);
+      deliveryStartDate.setDate(readyDate.getDate() + deliveryDaysMin);
+
+      const deliveryEndDate = new Date(readyDate);
+      deliveryEndDate.setDate(readyDate.getDate() + deliveryDaysMax);
+
+      // Cập nhật state với ngày giao hàng
+      setDeliveryStartDate(deliveryStartDate.toLocaleDateString());
+      setDeliveryEndDate(deliveryEndDate.toLocaleDateString());
+    };
+
+    calculateDeliveryDate();
+  }, [country]);
 
   // Tìm thuộc tính Color trong template_info.attributes
   const colorAttribute = product?.template_info?.attributes?.find(
@@ -369,6 +465,167 @@ export default function ProductDetail() {
     return finalPrice.toFixed(2);
   };
 
+  const handleAddToCartAndShowModal = (e) => {
+    e.preventDefault();
+
+    if (!product) {
+      Toast.fire({
+        icon: "error",
+        title: "Product does not exist!",
+      });
+      return;
+    }
+
+    const hasColor = colorAttribute && colorAttribute.values.length > 0;
+    const hasSize = sizeAttribute && sizeAttribute.values.length > 0;
+    const hasType = typeAttribute && typeAttribute.values.length > 0;
+
+    if (hasColor && !selectedColor) {
+      Toast.fire({
+        icon: "error",
+        title: "Please select a color before adding to cart!",
+      });
+      return;
+    }
+
+    if (hasSize && !selectedAttributes["Size"]) {
+      Toast.fire({
+        icon: "error",
+        title: "Please select a size before adding to cart!",
+      });
+      return;
+    }
+
+    if (hasType && !selectedAttributes["Type"]) {
+      Toast.fire({
+        icon: "error",
+        title: "Please select a type before adding to cart!",
+      });
+      return;
+    }
+
+    handleAddToCart();
+    const modal = new Modal(document.getElementById("cartModal"));
+    modal.show();
+  };
+
+  useEffect(() => {
+    // Khởi tạo tất cả các popover
+    const popoverTriggerList = [].slice.call(
+      document.querySelectorAll('[data-bs-toggle="popover"]')
+    );
+    const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl);
+    });
+
+    // Cleanup function
+    return () => {
+      popoverList.forEach((popover) => {
+        if (popover) {
+          popover.dispose();
+        }
+      });
+    };
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Hàm lưu sản phẩm vào localStorage
+  const saveToRecentlyViewed = (product) => {
+    try {
+      // Lấy danh sách sản phẩm đã xem từ localStorage
+      const recentlyViewed = JSON.parse(
+        localStorage.getItem("recentlyViewed") || "[]"
+      );
+
+      // Kiểm tra xem sản phẩm đã tồn tại trong danh sách chưa
+      const existingIndex = recentlyViewed.findIndex(
+        (p) => p.id === product.id
+      );
+
+      // Nếu sản phẩm đã tồn tại, xóa khỏi vị trí cũ
+      if (existingIndex !== -1) {
+        recentlyViewed.splice(existingIndex, 1);
+      }
+
+      // Thêm sản phẩm mới vào đầu danh sách
+      recentlyViewed.unshift(product);
+
+      // Giới hạn số lượng sản phẩm lưu trữ (tối đa 10 sản phẩm)
+      if (recentlyViewed.length > 8) {
+        recentlyViewed.pop();
+      }
+
+      // Lưu danh sách mới vào localStorage
+      localStorage.setItem("recentlyViewed", JSON.stringify(recentlyViewed));
+    } catch (error) {
+      console.error("Error saving to recently viewed:", error);
+    }
+  };
+
+  // Thêm state để quản lý trạng thái hiển thị modal size guide
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+
+  // Thêm state để quản lý việc hiển thị dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [selectedGuide, setSelectedGuide] = useState("Baseball Jackets");
+  const [unit, setUnit] = useState("cm");
+
+  const sizeGuides = [
+    "Baseball Jackets",
+    "Baseball Jerseys",
+    "Baseball Tees",
+    "High Top Sneakers",
+    "Hockey Jerseys",
+    "Hoodies",
+    "Joggers",
+    "Long Sleeves",
+    "Men Comfort Colors Tee",
+    "Men's Bomber Jackets",
+    "men's boxer underwear",
+    "Men's Pajamas Set",
+    "Men's Sportswear Suits Tights Sets",
+    "Men's Stand Collar Raglan Jackets",
+    "Men's Cooling Performance Color Blocked Jersey",
+    "Pajamas Long Sleeves Set",
+    "Polo",
+    "Shorts",
+    "SweatShirts",
+    "Tactical Hoodies",
+    "Tank Tops",
+    "T-Shirts",
+    "Women's Underwear",
+  ];
+
+  // Lọc danh sách dựa trên searchText
+  const filteredGuides = sizeGuides.filter((guide) =>
+    guide.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  // Thêm hàm xử lý khi chọn item
+  const handleSelectGuide = (guide) => {
+    setSelectedGuide(guide);
+    setIsDropdownOpen(false);
+    setSearchText("");
+  };
+
+  // Thêm state để quản lý trạng thái activeButton
+  const [activeButton, setActiveButton] = useState("Male");
+
+  // Lấy measurements cho sản phẩm và gender hiện tại
+  const getCurrentMeasurements = () => {
+    return (
+      productMeasurements[selectedGuide]?.[activeButton] || {
+        sizes: ["S", "M", "L", "XL", "2XL"],
+        types: ["SLEEVE LENGTH", "LENGTH", "1/2 BUST"],
+      }
+    );
+  };
+
+  // Lấy dữ liệu size chart cho sản phẩm, gender và đơn vị đo hiện tại
+  const getCurrentSizeChart = () => {
+    return sizeCharts[selectedGuide]?.[activeButton]?.[unit] || {};
+  };
+
   return (
     <section className="content py-5">
       <div className="container">
@@ -376,41 +633,116 @@ export default function ProductDetail() {
           <div className="row">
             <div className="col-12 col-md-7 col-lg-7">
               <div
-                className="d-block product-image-container"
-                style={{
-                  width: "75%",
-                  paddingBottom: "75%", // Tạo tỷ lệ khung hình 1:1
-                  position: "relative",
-                  margin: "auto",
-                }}
+                className="carousel-container"
+                style={{ position: "relative" }}
               >
-                <img
-                  src={
-                    selectedVariantImage
-                      ? selectedVariantImage instanceof File
-                        ? URL.createObjectURL(selectedVariantImage)
-                        : selectedVariantImage.startsWith("http")
-                        ? selectedVariantImage
-                        : urlImage + selectedVariantImage
-                      : mainImage
-                      ? mainImage instanceof File
-                        ? URL.createObjectURL(mainImage)
-                        : mainImage.startsWith("http")
-                        ? mainImage
-                        : urlImage + mainImage
-                      : ""
-                  }
-                  className="d-block product-detail-image"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                  alt={product?.product?.name || "Product Image"}
-                />
+                <div
+                  id="productCarousel"
+                  className="carousel slide"
+                  data-bs-ride="carousel"
+                >
+                  <div className="carousel-inner">
+                    {product?.product?.images?.map((image, index) => (
+                      <div
+                        className={`carousel-item ${
+                          index === 0 ? "active" : ""
+                        }`}
+                        key={index}
+                      >
+                        <img
+                          src={
+                            image.startsWith("images")
+                              ? urlImage + image
+                              : image
+                          }
+                          className="d-block w-100 rounded-2"
+                          style={{ height: "100%", objectFit: "cover" }} // Đảm bảo hình ảnh chiếm toàn bộ carousel
+                          alt={`Product image ${index + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    className="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#productCarousel"
+                    data-bs-slide="prev"
+                    style={{
+                      backgroundColor: "rgba(0, 0, 0, 0.5)", // Nền mờ đen
+                      borderRadius: "50%", // Bo tròn nút
+                      width: "40px", // Chiều rộng nút
+                      height: "40px", // Chiều cao nút
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "background-color 0.3s", // Hiệu ứng chuyển màu
+                      position: "absolute", // Đặt vị trí tuyệt đối
+                      top: "50%", // Đặt ở giữa theo chiều dọc
+                      left: "10px", // Khoảng cách từ bên trái
+                      transform: "translateY(-50%)", // Căn giữa theo chiều dọc
+                      zIndex: 1, // Đảm bảo nút nằm trên hình ảnh
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        "rgba(0, 0, 0, 0.8)")
+                    } // Tối màu khi hover
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        "rgba(0, 0, 0, 0.5)")
+                    } // Trở lại màu ban đầu
+                  >
+                    <span
+                      className="carousel-control-prev-icon"
+                      aria-hidden="true"
+                      style={{
+                        backgroundColor: "transparent", // Đảm bảo biểu tượng không có nền
+                        width: "20px", // Kích thước biểu tượng
+                        height: "20px", // Kích thước biểu tượng
+                      }}
+                    />
+                    <span className="visually-hidden">Previous</span>
+                  </button>
+                  <button
+                    className="carousel-control-next"
+                    type="button"
+                    data-bs-target="#productCarousel"
+                    data-bs-slide="next"
+                    style={{
+                      backgroundColor: "rgba(0, 0, 0, 0.5)", // Nền mờ đen
+                      borderRadius: "50%", // Bo tròn nút
+                      width: "40px", // Chiều rộng nút
+                      height: "40px", // Chiều cao nút
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "background-color 0.3s", // Hiệu ứng chuyển màu
+                      position: "absolute", // Đặt vị trí tuyệt đối
+                      top: "50%", // Đặt ở giữa theo chiều dọc
+                      right: "10px", // Khoảng cách từ bên phải
+                      transform: "translateY(-50%)", // Căn giữa theo chiều dọc
+                      zIndex: 1, // Đảm bảo nút nằm trên hình ảnh
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        "rgba(0, 0, 0, 0.8)")
+                    } // Tối màu khi hover
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        "rgba(0, 0, 0, 0.5)")
+                    } // Trở lại màu ban đầu
+                  >
+                    <span
+                      className="carousel-control-next-icon"
+                      aria-hidden="true"
+                      style={{
+                        backgroundColor: "transparent", // Đảm bảo biểu tượng không có nền
+                        width: "20px", // Kích thước biểu tượng
+                        height: "20px", // Kích thước biểu tượng
+                      }}
+                    />
+                    <span className="visually-hidden">Next</span>
+                  </button>
+                </div>
               </div>
 
               {productId ? (
@@ -420,7 +752,7 @@ export default function ProductDetail() {
                   <div className="spinner-border" role="status"></div>
                 </div>
               )}
-              {productId && <ProductSameSeller productId={productId} />}
+              <RecentlyViewedProducts />
             </div>
 
             <div className="col-md-5 col-12 col-lg-5">
@@ -459,6 +791,19 @@ export default function ProductDetail() {
                 <div className="p-2 discount-name">
                   {product?.pricing?.discount_info &&
                     `${product.pricing.discount_info.discount_value}% OFF - ${product.pricing.discount_info.discount_name} `}
+                </div>
+                <div className="py-2 return-policy">
+                  <button
+                    type="button"
+                    className="border-0 bg-transparent text-decoration-none"
+                    style={{ color: "#258635" }}
+                    data-bs-toggle="popover"
+                    data-bs-trigger="focus"
+                    title="Return this item for free"
+                    data-bs-content="Free returns are available for the shipping address you chose. You can return the item for any reason in new and unused condition: no return shipping charges."
+                  >
+                    FREE Returns
+                  </button>
                 </div>
                 {colorAttribute && (
                   <>
@@ -610,6 +955,267 @@ export default function ProductDetail() {
                     </div>
                   </div>
                 </div>
+
+                <div className="p-2 stock-info d-flex ">
+                  <span className="me-auto p-2 text-success me-2">
+                    <span className="fw-bold">✔</span> In Stock
+                  </span>
+                  <Link
+                    to="#"
+                    className="text-decoration-none mt-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowSizeGuide(true);
+                    }}
+                  >
+                    <img
+                      src="https://cdn-icons-png.flaticon.com/128/1437/1437317.png"
+                      alt=""
+                      style={{ width: "20px", height: "20px" }}
+                    />{" "}
+                    <span className="ms-2 text-success text-decoration-none">
+                      View size guide
+                    </span>
+                  </Link>
+                </div>
+
+                {/* Thêm modal size guide */}
+                <div
+                  className={`modal fade ${showSizeGuide ? "show" : ""}`}
+                  style={{ display: showSizeGuide ? "block" : "none" }}
+                  tabIndex="-1"
+                  aria-hidden={!showSizeGuide}
+                  id="sizeGuideModal"
+                >
+                  <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h5 className="modal-title text-center">
+                          Size & Fit Info
+                        </h5>
+                        <button
+                          type="button"
+                          className="btn-close"
+                          onClick={() => setShowSizeGuide(false)}
+                        ></button>
+                      </div>
+                      <div className="modal-body">
+                        <p className="text-center">
+                          If you're in between sizes, order a size up as our
+                          items can shrink up to half a size in the wash.
+                        </p>
+
+                        <div className="d-flex gap-3 mb-4">
+                          {["Male", "Female", "Youth", "Unisex", "Kids"].map(
+                            (type) => (
+                              <button
+                                key={type}
+                                style={{
+                                  backgroundColor:
+                                    activeButton === type ? "#2c1a5b" : "white",
+                                  color:
+                                    activeButton === type ? "white" : "#2c1a5b",
+                                  border: `1px solid ${
+                                    activeButton === type
+                                      ? "#2c1a5b"
+                                      : "#dee2e6"
+                                  }`,
+                                  transition: "all 0.3s ease",
+                                }}
+                                className="btn"
+                                onClick={() => setActiveButton(type)}
+                              >
+                                {type}
+                              </button>
+                            )
+                          )}
+                        </div>
+
+                        <div
+                          style={{ position: "relative", maxWidth: "300px" }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "10px",
+                            }}
+                          >
+                            {/* Select dropdown */}
+                            <div style={{ flex: 1, marginRight: "10px" }}>
+                              <div
+                                onClick={() =>
+                                  setIsDropdownOpen(!isDropdownOpen)
+                                }
+                                style={{
+                                  padding: "8px 12px",
+                                  border: "1px solid #ddd",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  backgroundColor: "white",
+                                }}
+                              >
+                                <span>{selectedGuide}</span>
+                                <i
+                                  className={`fas fa-chevron-${
+                                    isDropdownOpen ? "up" : "down"
+                                  }`}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Unit toggle buttons */}
+                            <div style={{ display: "flex", gap: "4px" }}>
+                              {["cm", "inches"].map((measureUnit) => (
+                                <button
+                                  key={measureUnit}
+                                  className="btn btn-sm"
+                                  onClick={() => setUnit(measureUnit)}
+                                  style={{
+                                    minWidth: "60px",
+                                    backgroundColor:
+                                      unit === measureUnit
+                                        ? "#2c1a5b"
+                                        : "white",
+                                    color:
+                                      unit === measureUnit
+                                        ? "white"
+                                        : "#2c1a5b",
+                                    border: `1px solid ${
+                                      unit === measureUnit
+                                        ? "#2c1a5b"
+                                        : "#dee2e6"
+                                    }`,
+                                    transition: "all 0.3s ease",
+                                  }}
+                                >
+                                  {measureUnit}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Dropdown menu */}
+                          {isDropdownOpen && (
+                            <ul
+                              id="sizeGuideMenu"
+                              className="size-guide-list guide-menu"
+                              style={{
+                                position: "absolute",
+                                top: "100%",
+                                left: 0,
+                                right: 0,
+                                zIndex: 1000,
+                                display: "block",
+                                maxHeight: "300px",
+                                overflowY: "auto",
+                                border: "1px solid #ddd",
+                                borderRadius: "4px",
+                                padding: "0",
+                                margin: "4px 0 0",
+                                backgroundColor: "white",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                              }}
+                            >
+                              <li
+                                id="find-size-guide"
+                                className="guide-menu-item"
+                                style={{
+                                  padding: "10px",
+                                  borderBottom: "1px solid #ddd",
+                                }}
+                              >
+                                <input
+                                  className="form-control"
+                                  type="text"
+                                  placeholder="Find size guide"
+                                  value={searchText}
+                                  onChange={(e) =>
+                                    setSearchText(e.target.value)
+                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ width: "100%" }}
+                                />
+                              </li>
+
+                              {filteredGuides.map((guide, index) => (
+                                <li
+                                  key={index}
+                                  className={`guide-menu-item ${
+                                    selectedGuide === guide ? "selected" : ""
+                                  }`}
+                                  onClick={() => handleSelectGuide(guide)}
+                                  style={{
+                                    padding: "10px 15px",
+                                    cursor: "pointer",
+                                    backgroundColor:
+                                      selectedGuide === guide
+                                        ? "#f0f0f0"
+                                        : "transparent",
+                                    borderBottom: "1px solid #ddd",
+                                    transition: "background-color 0.2s",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.backgroundColor =
+                                      "#f8f9fa")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.backgroundColor =
+                                      selectedGuide === guide
+                                        ? "#f0f0f0"
+                                        : "transparent")
+                                  }
+                                >
+                                  <span className="guide-menu-item-link">
+                                    {guide}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        <div className="table-responsive">
+                          <table className="table table-bordered">
+                            <thead>
+                              <tr>
+                                <th>Product Measurements</th>
+                                {getCurrentMeasurements().sizes.map((size) => (
+                                  <th key={size}>{size}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {getCurrentMeasurements().types.map((type) => (
+                                <tr key={type}>
+                                  <td>{type}</td>
+                                  {getCurrentSizeChart()[type]?.map(
+                                    (value, index) => (
+                                      <td key={index}>{value}</td>
+                                    )
+                                  )}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Thêm backdrop cho modal */}
+                {showSizeGuide && (
+                  <div
+                    className="modal-backdrop fade show"
+                    onClick={() => setShowSizeGuide(false)}
+                  ></div>
+                )}
+
                 <div className="p-2 type-product">
                   {" "}
                   <div className="row">
@@ -617,13 +1223,10 @@ export default function ProductDetail() {
                     <div className="col-sm-10 d-flex justify-content-center">
                       {" "}
                       <button
-                        onClick={() => handleAddToCart()}
+                        onClick={handleAddToCartAndShowModal}
                         className="add-to-cart-btn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#cartModal"
                       >
-                        {" "}
-                        <i className="fas fa-shopping-bag" /> Add to cart{" "}
+                        <i className="fas fa-shopping-bag" /> Add to cart
                       </button>
                       <div
                         className="modal fade"
@@ -647,725 +1250,245 @@ export default function ProductDetail() {
                             </div>
                             <div className="modal-body">
                               <div className="row">
-                                <div className="col-12 col-md-6 col-lg-6">
-                                  {cartItems.map((seller) => (
-                                    <div
-                                      key={seller.sellerId}
-                                      className="order-seller "
-                                    >
-                                      <p className="shop-name ">
-                                        <i
-                                          style={{ color: "#C0C0C0" }}
-                                          className="fas fa-store me-2 mt-3"
-                                        ></i>
-                                        {seller.shopName}
-                                      </p>
-                                      {seller.items.map((item) => (
-                                        <div
-                                          key={item.id}
-                                          className="order-item"
-                                        >
-                                          <img
-                                            src={
-                                              item.image instanceof File
-                                                ? URL.createObjectURL(
-                                                    item.image
-                                                  )
-                                                : item.image?.startsWith("http")
-                                                ? item.image
-                                                : urlImage + item.image
-                                            }
-                                            alt={item.name}
-                                            className="order-item-image ms-2"
-                                          />
-                                          <div className="product-details">
-                                            <h2>{item.name}</h2>
-                                            {item.size && (
-                                              <p>Size: {item.size}</p>
-                                            )}
-                                            {item.color && (
-                                              <p>Color: {item.color}</p>
-                                            )}
-                                            {item.type && (
-                                              <p>Type: {item.type}</p>
-                                            )}
-                                            <div className="d-flex">
-                                              <div className="me-auto">
-                                                <div className="pricing-info">
-                                                  <div className="discounted-price">
+                                <div className="table-responsive mt-3 ">
+                                  <table className="table">
+                                    <thead>
+                                      <tr>
+                                        <th>Item</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Subtotal</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {cartItems.map((seller) => (
+                                        <React.Fragment key={seller.sellerId}>
+                                          <tr>
+                                            <td colSpan={4}>
+                                              <p>
+                                                <i
+                                                  style={{ color: "#C0C0C0" }}
+                                                  className="fas fa-store text-danger me-2 mt-3"
+                                                ></i>
+                                                {seller.shopName}
+                                              </p>
+                                            </td>
+                                          </tr>
+                                          {seller.items.map((item) => (
+                                            <React.Fragment key={item.id}>
+                                              <tr>
+                                                <td>
+                                                  <div className="d-flex">
+                                                    <img
+                                                      alt={item.name}
+                                                      className="me-3 img-item"
+                                                      height={100}
+                                                      src={
+                                                        item.image.startsWith(
+                                                          "images"
+                                                        )
+                                                          ? urlImage +
+                                                            item.image
+                                                          : item.image
+                                                      }
+                                                      width={100}
+                                                    />
+                                                    <div>
+                                                      <div
+                                                        className="item-title"
+                                                        style={{
+                                                          maxWidth: "250px",
+                                                          overflow: "hidden",
+                                                          textOverflow:
+                                                            "ellipsis",
+                                                          whiteSpace: "nowrap",
+                                                          display: "block",
+                                                        }}
+                                                      >
+                                                        <Link
+                                                          to={`/product/${item.slug}`}
+                                                          style={{
+                                                            textDecoration:
+                                                              "none",
+                                                            color: "inherit",
+                                                          }}
+                                                        >
+                                                          {item.name}
+                                                        </Link>
+                                                      </div>
+                                                      <div>
+                                                        {item.size
+                                                          ? "Size: " + item.size
+                                                          : ""}
+                                                      </div>
+                                                      <div>
+                                                        {item.color
+                                                          ? "Color: " +
+                                                            item.color
+                                                          : ""}
+                                                      </div>
+                                                      <div>
+                                                        {item.type
+                                                          ? "Type: " + item.type
+                                                          : ""}
+                                                      </div>
+                                                      <div className="mt-2">
+                                                        <Link
+                                                          className="remove-item-cart text-danger"
+                                                          to="#"
+                                                          onClick={() =>
+                                                            dispatch(
+                                                              removeFromCart({
+                                                                id: item.id,
+                                                                color:
+                                                                  item.color,
+                                                                size: item.size,
+                                                                type: item.type,
+                                                                sellerId:
+                                                                  item.seller_id,
+                                                              })
+                                                            )
+                                                          }
+                                                        >
+                                                          <i className="fas fa-trash me-2"></i>
+                                                          Remove
+                                                        </Link>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </td>
+                                                <td className="align-middle">
+                                                  <div className="text-success fw-bold">
                                                     $
                                                     {parseFloat(
                                                       item.price
-                                                    ).toFixed(2)}{" "}
-                                                    × {item.count}
+                                                    ).toFixed(2)}
                                                   </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
+                                                </td>
+                                                <td className="align-middle">
+                                                  <div className="d-flex align-items-center">
+                                                    <div
+                                                      className="d-flex border border-secondary rounded"
+                                                      style={{
+                                                        width: "100%",
+                                                        maxWidth: "150px",
+                                                        minWidth: "100px",
+                                                      }}
+                                                    >
+                                                      <button
+                                                        id="decrement"
+                                                        className="d-flex justify-content-center align-items-center"
+                                                        onClick={() =>
+                                                          dispatch(
+                                                            decreaseCount({
+                                                              id: item.id,
+                                                              color: item.color,
+                                                              size: item.size,
+                                                              type: item.type,
+                                                              sellerId:
+                                                                item.seller_id,
+                                                            })
+                                                          )
+                                                        }
+                                                        style={{
+                                                          width: "33.33%",
+                                                          height: "40px",
+                                                          border: "none",
+                                                          background: "none",
+                                                          cursor: "pointer",
+                                                          fontSize:
+                                                            "calc(14px + 0.2vw)",
+                                                          fontWeight: "bold",
+                                                          padding: "0",
+                                                          minWidth: "30px",
+                                                        }}
+                                                      >
+                                                        -
+                                                      </button>
+                                                      <div
+                                                        id="count"
+                                                        className="d-flex justify-content-center align-items-center border-start border-end border-secondary"
+                                                        style={{
+                                                          width: "33.33%",
+                                                          height: "40px",
+                                                          fontSize:
+                                                            "calc(14px + 0.2vw)",
+                                                          fontWeight: "500",
+                                                          minWidth: "30px",
+                                                        }}
+                                                      >
+                                                        {item.count}
+                                                      </div>
+                                                      <button
+                                                        id="increment"
+                                                        className="d-flex justify-content-center align-items-center"
+                                                        onClick={() =>
+                                                          dispatch(
+                                                            increaseCount({
+                                                              id: item.id,
+                                                              color: item.color,
+                                                              size: item.size,
+                                                              type: item.type,
+                                                              sellerId:
+                                                                item.seller_id,
+                                                            })
+                                                          )
+                                                        }
+                                                        style={{
+                                                          width: "33.33%",
+                                                          height: "40px",
+                                                          border: "none",
+                                                          background: "none",
+                                                          cursor: "pointer",
+                                                          fontSize:
+                                                            "calc(14px + 0.2vw)",
+                                                          fontWeight: "bold",
+                                                          padding: "0",
+                                                          minWidth: "30px",
+                                                        }}
+                                                      >
+                                                        +
+                                                      </button>
+                                                    </div>
+                                                  </div>
+                                                </td>
+                                                <td className="subtotal text-danger fw-bold align-middle">
+                                                  $
+                                                  {parseFloat(
+                                                    item.price * item.count
+                                                  ).toFixed(2)}
+                                                </td>
+                                              </tr>
+                                            </React.Fragment>
+                                          ))}
+                                        </React.Fragment>
                                       ))}
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="col-12 col-md-6 col-lg-6">
-                                  <h4>Billing information</h4>
-                                  <div className="billing-form-row  mt-3">
-                                    <div className="billing-form-group">
-                                      <input
-                                        type="text"
-                                        placeholder="First name"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
-                                      />
-                                    </div>
-                                    <div className="billing-form-group">
-                                      <input
-                                        type="text"
-                                        placeholder="Last name"
-                                        name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleChange}
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="billing-form-group">
-                                    <input
-                                      type="text"
-                                      placeholder="Phone (required)"
-                                      name="phone"
-                                      value={formData.phone}
-                                      onChange={handleChange}
-                                    />
-                                  </div>
-                                  <div className="billing-form-group">
-                                    <input
-                                      type="text"
-                                      placeholder="Email (required)"
-                                      name="email"
-                                      value={formData.email}
-                                      onChange={handleChange}
-                                    />
-                                  </div>
-                                  <div className="shipping-address">
-                                    <h4>Shipping Address</h4>
-                                    <form>
-                                      <div className="billing-form-row"></div>
-                                      <div className="container-country">
-                                        <div className="header-country">
-                                          <div>
-                                            <div className="title-country">
-                                              Country / Region
-                                            </div>
-                                          </div>
-                                        </div>
-                                        <div className="select-container-country">
-                                          <select
-                                            value={
-                                              formData.country ||
-                                              "united-states"
-                                            }
-                                            onChange={(e) =>
-                                              setFormData({
-                                                ...formData,
-                                                country: e.target.value,
-                                              })
-                                            }
-                                          >
-                                            <option value="">
-                                              Select a country
-                                            </option>
-                                            <option value="afghanistan">
-                                              Afghanistan
-                                            </option>
-                                            <option value="albania">
-                                              Albania
-                                            </option>
-                                            <option value="algeria">
-                                              Algeria
-                                            </option>
-                                            <option value="american-samoa">
-                                              American Samoa
-                                            </option>
-                                            <option value="andorra">
-                                              Andorra
-                                            </option>
-                                            <option value="angola">
-                                              Angola
-                                            </option>
-                                            <option value="anguilla">
-                                              Anguilla
-                                            </option>
-                                            <option value="antarctica">
-                                              Antarctica
-                                            </option>
-                                            <option value="antigua-and-barbuda">
-                                              Antigua and Barbuda
-                                            </option>
-                                            <option value="argentina">
-                                              Argentina
-                                            </option>
-                                            <option value="armenia">
-                                              Armenia
-                                            </option>
-                                            <option value="australia">
-                                              Australia
-                                            </option>
-                                            <option value="austria">
-                                              Austria
-                                            </option>
-                                            <option value="azerbaijan">
-                                              Azerbaijan
-                                            </option>
-                                            <option value="bahamas">
-                                              Bahamas
-                                            </option>
-                                            <option value="bahrain">
-                                              Bahrain
-                                            </option>
-                                            <option value="bangladesh">
-                                              Bangladesh
-                                            </option>
-                                            <option value="barbados">
-                                              Barbados
-                                            </option>
-                                            <option value="belarus">
-                                              Belarus
-                                            </option>
-                                            <option value="belgium">
-                                              Belgium
-                                            </option>
-                                            <option value="belize">
-                                              Belize
-                                            </option>
-                                            <option value="benin">Benin</option>
-                                            <option value="bermuda">
-                                              Bermuda
-                                            </option>
-                                            <option value="bhutan">
-                                              Bhutan
-                                            </option>
-                                            <option value="bolivia">
-                                              Bolivia
-                                            </option>
-                                            <option value="bosnia-and-herzegovina">
-                                              Bosnia and Herzegovina
-                                            </option>
-                                            <option value="botswana">
-                                              Botswana
-                                            </option>
-                                            <option value="brazil">
-                                              Brazil
-                                            </option>
-                                            <option value="brunei">
-                                              Brunei
-                                            </option>
-                                            <option value="bulgaria">
-                                              Bulgaria
-                                            </option>
-                                            <option value="burkina-faso">
-                                              Burkina Faso
-                                            </option>
-                                            <option value="burundi">
-                                              Burundi
-                                            </option>
-                                            <option value="cabo-verde">
-                                              Cabo Verde
-                                            </option>
-                                            <option value="cambodia">
-                                              Cambodia
-                                            </option>
-                                            <option value="cameroon">
-                                              Cameroon
-                                            </option>
-                                            <option value="canada">
-                                              Canada
-                                            </option>
-                                            <option value="central-african-republic">
-                                              Central African Republic
-                                            </option>
-                                            <option value="chad">Chad</option>
-                                            <option value="chile">Chile</option>
-                                            <option value="china">China</option>
-                                            <option value="colombia">
-                                              Colombia
-                                            </option>
-                                            <option value="comoros">
-                                              Comoros
-                                            </option>
-                                            <option value="congo">Congo</option>
-                                            <option value="costa-rica">
-                                              Costa Rica
-                                            </option>
-                                            <option value="croatia">
-                                              Croatia
-                                            </option>
-                                            <option value="cuba">Cuba</option>
-                                            <option value="cyprus">
-                                              Cyprus
-                                            </option>
-                                            <option value="czech-republic">
-                                              Czech Republic
-                                            </option>
-                                            <option value="democratic-republic-of-the-congo">
-                                              Democratic Republic of the Congo
-                                            </option>
-                                            <option value="denmark">
-                                              Denmark
-                                            </option>
-                                            <option value="djibouti">
-                                              Djibouti
-                                            </option>
-                                            <option value="dominica">
-                                              Dominica
-                                            </option>
-                                            <option value="dominican-republic">
-                                              Dominican Republic
-                                            </option>
-                                            <option value="ecuador">
-                                              Ecuador
-                                            </option>
-                                            <option value="egypt">Egypt</option>
-                                            <option value="el-salvador">
-                                              El Salvador
-                                            </option>
-                                            <option value="equatorial-guinea">
-                                              Equatorial Guinea
-                                            </option>
-                                            <option value="eritrea">
-                                              Eritrea
-                                            </option>
-                                            <option value="estonia">
-                                              Estonia
-                                            </option>
-                                            <option value="eswatini">
-                                              Eswatini
-                                            </option>
-                                            <option value="ethiopia">
-                                              Ethiopia
-                                            </option>
-                                            <option value="fiji">Fiji</option>
-                                            <option value="finland">
-                                              Finland
-                                            </option>
-                                            <option value="france">
-                                              France
-                                            </option>
-                                            <option value="gabon">Gabon</option>
-                                            <option value="gambia">
-                                              Gambia
-                                            </option>
-                                            <option value="georgia">
-                                              Georgia
-                                            </option>
-                                            <option value="germany">
-                                              Germany
-                                            </option>
-                                            <option value="ghana">Ghana</option>
-                                            <option value="greece">
-                                              Greece
-                                            </option>
-                                            <option value="grenada">
-                                              Grenada
-                                            </option>
-                                            <option value="guatemala">
-                                              Guatemala
-                                            </option>
-                                            <option value="guinea">
-                                              Guinea
-                                            </option>
-                                            <option value="guinea-bissau">
-                                              Guinea-Bissau
-                                            </option>
-                                            <option value="guyana">
-                                              Guyana
-                                            </option>
-                                            <option value="haiti">Haiti</option>
-                                            <option value="honduras">
-                                              Honduras
-                                            </option>
-                                            <option value="hungary">
-                                              Hungary
-                                            </option>
-                                            <option value="iceland">
-                                              Iceland
-                                            </option>
-                                            <option value="india">India</option>
-                                            <option value="indonesia">
-                                              Indonesia
-                                            </option>
-                                            <option value="iran">Iran</option>
-                                            <option value="iraq">Iraq</option>
-                                            <option value="ireland">
-                                              Ireland
-                                            </option>
-                                            <option value="israel">
-                                              Israel
-                                            </option>
-                                            <option value="italy">Italy</option>
-                                            <option value="jamaica">
-                                              Jamaica
-                                            </option>
-                                            <option value="japan">Japan</option>
-                                            <option value="jordan">
-                                              Jordan
-                                            </option>
-                                            <option value="kazakhstan">
-                                              Kazakhstan
-                                            </option>
-                                            <option value="kenya">Kenya</option>
-                                            <option value="kiribati">
-                                              Kiribati
-                                            </option>
-                                            <option value="korea-north">
-                                              North Korea
-                                            </option>
-                                            <option value="korea-south">
-                                              South Korea
-                                            </option>
-                                            <option value="kosovo">
-                                              Kosovo
-                                            </option>
-                                            <option value="kuwait">
-                                              Kuwait
-                                            </option>
-                                            <option value="kyrgyzstan">
-                                              Kyrgyzstan
-                                            </option>
-                                            <option value="laos">Laos</option>
-                                            <option value="latvia">
-                                              Latvia
-                                            </option>
-                                            <option value="lebanon">
-                                              Lebanon
-                                            </option>
-                                            <option value="lesotho">
-                                              Lesotho
-                                            </option>
-                                            <option value="liberia">
-                                              Liberia
-                                            </option>
-                                            <option value="libya">Libya</option>
-                                            <option value="liechtenstein">
-                                              Liechtenstein
-                                            </option>
-                                            <option value="lithuania">
-                                              Lithuania
-                                            </option>
-                                            <option value="luxembourg">
-                                              Luxembourg
-                                            </option>
-                                            <option value="madagascar">
-                                              Madagascar
-                                            </option>
-                                            <option value="malawi">
-                                              Malawi
-                                            </option>
-                                            <option value="malaysia">
-                                              Malaysia
-                                            </option>
-                                            <option value="maldives">
-                                              Maldives
-                                            </option>
-                                            <option value="mali">Mali</option>
-                                            <option value="malta">Malta</option>
-                                            <option value="marshall-islands">
-                                              Marshall Islands
-                                            </option>
-                                            <option value="martinique">
-                                              Martinique
-                                            </option>
-                                            <option value="mauritania">
-                                              Mauritania
-                                            </option>
-                                            <option value="mauritius">
-                                              Mauritius
-                                            </option>
-                                            <option value="mexico">
-                                              Mexico
-                                            </option>
-                                            <option value="micronesia">
-                                              Micronesia
-                                            </option>
-                                            <option value="moldova">
-                                              Moldova
-                                            </option>
-                                            <option value="monaco">
-                                              Monaco
-                                            </option>
-                                            <option value="mongolia">
-                                              Mongolia
-                                            </option>
-                                            <option value="montenegro">
-                                              Montenegro
-                                            </option>
-                                            <option value="morocco">
-                                              Morocco
-                                            </option>
-                                            <option value="mozambique">
-                                              Mozambique
-                                            </option>
-                                            <option value="myanmar">
-                                              Myanmar
-                                            </option>
-                                            <option value="namibia">
-                                              Namibia
-                                            </option>
-                                            <option value="nauru">Nauru</option>
-                                            <option value="nepal">Nepal</option>
-                                            <option value="netherlands">
-                                              Netherlands
-                                            </option>
-                                            <option value="new-zealand">
-                                              New Zealand
-                                            </option>
-                                            <option value="nicaragua">
-                                              Nicaragua
-                                            </option>
-                                            <option value="niger">Niger</option>
-                                            <option value="nigeria">
-                                              Nigeria
-                                            </option>
-                                            <option value="north-macedonia">
-                                              North Macedonia
-                                            </option>
-                                            <option value="norway">
-                                              Norway
-                                            </option>
-                                            <option value="oman">Oman</option>
-                                            <option value="pakistan">
-                                              Pakistan
-                                            </option>
-                                            <option value="palau">Palau</option>
-                                            <option value="palestine">
-                                              Palestine
-                                            </option>
-                                            <option value="panama">
-                                              Panama
-                                            </option>
-                                            <option value="papua-new-guinea">
-                                              Papua New Guinea
-                                            </option>
-                                            <option value="paraguay">
-                                              Paragu
-                                            </option>
-                                            <option value="peru">Peru</option>
-                                            <option value="philippines">
-                                              Philippines
-                                            </option>
-                                            <option value="poland">
-                                              Poland
-                                            </option>
-                                            <option value="portugal">
-                                              Portugal
-                                            </option>
-                                            <option value="qatar">Qatar</option>
-                                            <option value="romania">
-                                              Romania
-                                            </option>
-                                            <option value="russia">
-                                              Russia
-                                            </option>
-                                            <option value="rwanda">
-                                              Rwanda
-                                            </option>
-                                            <option value="saint-kitts-and-nevis">
-                                              Saint Kitts and Nevis
-                                            </option>
-                                            <option value="saint-lucia">
-                                              Saint Lucia
-                                            </option>
-                                            <option value="saint-vincent-and-the-grenadines">
-                                              Saint Vincent and the Grenadines
-                                            </option>
-                                            <option value="samoa">Samoa</option>
-                                            <option value="san-marino">
-                                              San Marino
-                                            </option>
-                                            <option value="sao-tome-and-principe">
-                                              Sao Tome and Principe
-                                            </option>
-                                            <option value="saudi-arabia">
-                                              Saudi Arabia
-                                            </option>
-                                            <option value="senegal">
-                                              Senegal
-                                            </option>
-                                            <option value="serbia">
-                                              Serbia
-                                            </option>
-                                            <option value="seychelles">
-                                              Seychelles
-                                            </option>
-                                            <option value="sierra-leone">
-                                              Sierra Leone
-                                            </option>
-                                            <option value="singapore">
-                                              Singapore
-                                            </option>
-                                            <option value="slovakia">
-                                              Slovakia
-                                            </option>
-                                            <option value="slovenia">
-                                              Slovenia
-                                            </option>
-                                            <option value="solomon-islands">
-                                              Solomon Islands
-                                            </option>
-                                            <option value="somalia">
-                                              Somalia
-                                            </option>
-                                            <option value="south-africa">
-                                              South Africa
-                                            </option>
-                                            <option value="south-sudan">
-                                              South Sudan
-                                            </option>
-                                            <option value="spain">Spain</option>
-                                            <option value="sri-lanka">
-                                              Sri Lanka
-                                            </option>
-                                            <option value="sudan">Sudan</option>
-                                            <option value="suriname">
-                                              Suriname
-                                            </option>
-                                            <option value="sweden">
-                                              Sweden
-                                            </option>
-                                            <option value="switzerland">
-                                              Switzerland
-                                            </option>
-                                            <option value="syria">Syria</option>
-                                            <option value="taiwan">
-                                              Taiwan
-                                            </option>
-                                            <option value="tajikistan">
-                                              Tajikistan
-                                            </option>
-                                            <option value="tanzania">
-                                              Tanzania
-                                            </option>
-                                            <option value="thailand">
-                                              Thailand
-                                            </option>
-                                            <option value="togo">Togo</option>
-                                            <option value="tonga">Tonga</option>
-                                            <option value="trinidad-and-tobago">
-                                              Trinidad and Tobago
-                                            </option>
-                                            <option value="tunisia">
-                                              Tunisia
-                                            </option>
-                                            <option value="turkey">
-                                              Turkey
-                                            </option>
-                                            <option value="turkmenistan">
-                                              Turkmenistan
-                                            </option>
-                                            <option value="tuvalu">
-                                              Tuvalu
-                                            </option>
-                                            <option value="uganda">
-                                              Uganda
-                                            </option>
-                                            <option value="ukraine">
-                                              Ukraine
-                                            </option>
-                                            <option value="united-arab-emirates">
-                                              United Arab Emirates
-                                            </option>
-                                            <option value="united-kingdom">
-                                              United Kingdom
-                                            </option>
-                                            <option value="united-states">
-                                              United States
-                                            </option>
-                                            <option value="uruguay">
-                                              Uruguay
-                                            </option>
-                                            <option value="uzbekistan">
-                                              Uzbekistan
-                                            </option>
-                                            <option value="vanuatu">
-                                              Vanuatu
-                                            </option>
-                                            <option value="vatican-city">
-                                              Vatican City
-                                            </option>
-                                            <option value="venezuela">
-                                              Venezuela
-                                            </option>
-                                            <option value="vietnam">
-                                              Vietnam
-                                            </option>
-                                            <option value="yemen">Yemen</option>
-                                            <option value="zambia">
-                                              Zambia
-                                            </option>
-                                            <option value="zimbabwe">
-                                              Zimbabwe
-                                            </option>
-                                          </select>
-                                        </div>
-                                      </div>
-                                      <div className="billing-form-group mt-3">
-                                        <input
-                                          type="text"
-                                          placeholder="Apartment, suite, etc. (optional)"
-                                          name="address"
-                                          value={formData.address}
-                                          onChange={handleChange}
-                                        />
-                                      </div>
-
-                                      <div className="billing-form-group mt-2">
-                                        <input
-                                          type="text"
-                                          placeholder="City"
-                                          name="city"
-                                          value={formData.city}
-                                          onChange={handleChange}
-                                        />
-                                      </div>
-                                      <div className="billing-form-group mt-2">
-                                        <input
-                                          type="text"
-                                          placeholder="ZIP / Postal code"
-                                          name="zipCode"
-                                          value={formData.zipCode}
-                                          onChange={handleChange}
-                                        />
-                                      </div>
-                                      <div className="billing-form-group mt-2">
-                                        <input
-                                          type="text"
-                                          placeholder="Order notes (optional)"
-                                          name="shippingNotes"
-                                          value={formData.shippingNotes}
-                                          onChange={handleChange}
-                                        />
-                                      </div>
-                                    </form>
-                                  </div>
+                                    </tbody>
+                                  </table>
                                 </div>
                               </div>
 
                               <div className="cart-actions">
                                 <div className="row my-3">
-                                  <div className="col-6 ">
+                                  <div className="col-6">
                                     <button
                                       className="btn btn-danger"
                                       onClick={handleCheckout}
-                                      data-bs-dismiss="modal"
                                     >
                                       Checkout
                                     </button>
                                   </div>
                                   <div className="col-6">
                                     <button
-                                      onClick={() => navigate("/cart")}
-                                      data-bs-dismiss="modal"
+                                      onClick={() => {
+                                        const modal = Modal.getInstance(
+                                          document.getElementById("cartModal")
+                                        );
+                                        if (modal) {
+                                          modal.hide();
+                                        }
+                                        navigate("/cart");
+                                      }}
                                       className="btn btn-primary"
                                     >
                                       View cart
@@ -1441,46 +1564,72 @@ export default function ProductDetail() {
                     </button>
                   </div>
                 </div>
-                {/* <div className="p-2 type-product">
+                <div className="p-2 type-product">
                   <div className="features-title">
                     Shipping and return policies
                   </div>
-                  <div className="d-flex flex-row mb-3 shipping-policy">
+                  <div className="d-flex flex-row shipping-policy">
                     <div className="p-2">
                       {" "}
                       <img
                         alt="Delivery truck icon"
                         className="icon"
-                        height={24}
-                        src="https://storage.googleapis.com/a1aa/image/4Sd4ygbpUUprPVeAN2PWrajHPcYGE8HIwp2M74uNv8p9f0rTA.jpg"
-                        width={24}
+                        height={30}
+                        src="https://cdn-icons-png.flaticon.com/128/9274/9274440.png"
+                        width={30}
                       />{" "}
                     </div>
                     <div className="p-2">
                       {" "}
-                      <span>Deliver to</span>
+                      <span>
+                        Deliver to <b>{country}</b>
+                      </span>
                       <br />
-                      <span className="highlight">Viet Nam</span>
-                      <Link className="link" to="#">
-                        Details»
-                      </Link>
+                      <b>Standard</b> between {deliveryStartDate} -{" "}
+                      {deliveryEndDate}
                       <br />
-                      Standard between Nov. 14 - Dec. 11
+                      <b>Ready To Ship In</b>: 2 business days
                       <br />
-                      Ready To Ship In: 1 business day
-                      <br />
-                      Not soon enough?
-                      <Link className="link" to="#">
-                        Give a digital gift card.
-                      </Link>
-                      <p />
                     </div>
                   </div>
-                </div> */}
+                  <div className="d-flex flex-row shipping-policy">
+                    <div className="p-2">
+                      {" "}
+                      <img
+                        alt="Return policy icon"
+                        className="icon"
+                        height={30}
+                        src="https://cdn-icons-png.flaticon.com/128/15178/15178178.png"
+                        width={30}
+                      />{" "}
+                    </div>
+                    <div className="p-2">
+                      <p>
+                        Eligible for{" "}
+                        <Link
+                          style={{ color: "#e2150c" }}
+                          className="text-decoration-none"
+                          to="/page/refund-policy"
+                        >
+                          Refund
+                        </Link>{" "}
+                        or{" "}
+                        <Link
+                          style={{ color: "#e2150c" }}
+                          className="text-decoration-none"
+                          to="/page/returns-exchanges-policy"
+                        >
+                          Return and Replacement
+                        </Link>{" "}
+                        within 30 days from the date of delivery
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="p-2">
                   <div className="seller-info">
-                    <div className="d-flex flex-row mb-3">
-                      <div className="p-2 rounded-3 my-auto">
+                    <div className="d-flex flex-row ">
+                      <div className=" rounded-3 my-auto">
                         <img
                           className=" rounded-3"
                           alt="Cartoon character holding a drink with the text 'CRAIC' below"
@@ -1496,11 +1645,15 @@ export default function ProductDetail() {
                       </div>
                       <div className="p-2 d-flex flex-column">
                         <div className="p-2 seller-details">
-                          <div className="title-design">
+                          <div
+                            className="title-design"
+                            style={{ color: "#005366" }}
+                          >
                             Designed and sold by
                           </div>
                           <div className="name">
                             <Link
+                              style={{ color: "#e2150c" }}
                               to={`/shop/${product?.seller_info?.seller?.id}`}
                             >
                               {product &&
@@ -1529,54 +1682,7 @@ export default function ProductDetail() {
                 </div>
 
                 <div className="row">
-                  {loading ? (
-                    <div className="text-center">
-                      <div className="spinner-border" role="status"></div>
-                    </div>
-                  ) : (
-                    productId && (
-                      <ProductSameSellerMobile productId={productId} />
-                    )
-                  )}
-                </div>
-                <h2 className="product-title mt-4">Explore related searches</h2>
-                <div className="related-items mt-4">
-                  <div className="related-item">
-                    <img
-                      alt="Group of people wearing activewear"
-                      height={150}
-                      src="https://storage.googleapis.com/a1aa/image/p0FcmbrPHG7bE5x2fasWyJPluKbVamywjNUbixnmikcRP71JA.jpg"
-                      width={150}
-                    />
-                    <p>Activewear</p>
-                  </div>
-                  <div className="related-item">
-                    <img
-                      alt="Double sided sweatshirts with designs"
-                      height={150}
-                      src="https://storage.googleapis.com/a1aa/image/pNhevtSFfNsBfp3yLM4phgH4o6ugijq3fidCOaBPN8RC6ZvOB.jpg"
-                      width={150}
-                    />
-                    <p>Double Sided Sweatshirts</p>
-                  </div>
-                  <div className="related-item">
-                    <img
-                      alt="Purple sweatshirt with Halloween design"
-                      height={150}
-                      src="https://storage.googleapis.com/a1aa/image/aZCW9rpZI9KBKNTBqASHqylXrlnOaZKPV5k7yTKVF6cpn96E.jpg"
-                      width={150}
-                    />
-                    <p>Sweatshirts</p>
-                  </div>
-                  <div className="related-item">
-                    <img
-                      alt="Clothing items including jeans and t-shirt"
-                      height={150}
-                      src="https://storage.googleapis.com/a1aa/image/Z1uMPIqLeSyKdizQZX86BeeSw5bHE8TzeaDV125ok3feon96E.jpg"
-                      width={150}
-                    />
-                    <p>Clothing</p>
-                  </div>
+                  <RecentlyViewed />
                 </div>
               </div>
             </div>

@@ -17,7 +17,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/960x960/asset.prtvstatic.com/printerval-mirror/2023-09-27/1e8cc6533c9825e5a2b0f66aea861ebc_1948.jpg"
+                src="https://i.etsystatic.com/24392251/c/1754/1754/156/190/il/9bf1bb/6492586144/il_600x600.6492586144_8lg3.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -26,7 +26,7 @@ export default function BubbleCategory() {
                 }}
               />
             </div>
-            <div className="text-center p-3 fw-semibold">Christmas Gifts</div>
+            <div className="text-center p-3 fw-semibold">Valentine's Day</div>
           </Link>
         </div>
         <div className="p-2">
@@ -34,7 +34,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/960x0/asset.prtvstatic.com/2024/10/31/thanksgiving-day-49f9cf01b226fe60d6e5d076abe92ad6.jpg"
+                src="https://i.etsystatic.com/35265283/c/2097/2097/446/229/il/39f13f/5845628271/il_600x600.5845628271_syem.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -43,7 +43,7 @@ export default function BubbleCategory() {
                 }}
               />
             </div>
-            <div className="text-center p-3 fw-semibold">Thanksgiving Day</div>
+            <div className="text-center p-3 fw-semibold">Easter's Day</div>
           </Link>
         </div>
         <div className="p-2">
@@ -51,7 +51,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/960x960/asset.prtvstatic.com/2024/03/16/bella-canvas-tee-mockup-of-a-man-and-his-father-posing-in-a-camping-decorated-setting-m34977-aba4b961b83e072ac1ae61ea39f00199.png"
+                src="https://i.etsystatic.com/56507840/r/il/a12098/6551934998/il_600x600.6551934998_83t9.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -60,9 +60,7 @@ export default function BubbleCategory() {
                 }}
               />
             </div>
-            <div className="text-center p-3 fw-semibold">
-              Disney Vacation 2024
-            </div>
+            <div className="text-center p-3 fw-semibold">3D Hoodies</div>
           </Link>
         </div>
         <div className="p-2">
@@ -70,7 +68,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/image/540x540/socks-1,black,print-2024-08-20_7ad0afd9-f20f-436d-8ac3-af2375040f95,2d2d2d.jpeg"
+                src="https://i.etsystatic.com/36033792/c/1368/1368/333/375/il/a840da/6520059316/il_600x600.6520059316_kkj0.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -87,7 +85,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2024/05/28/432659c519f14adcc292cb2c0ad8e9f1.jpg"
+                src="https://i.etsystatic.com/50742176/r/il/2c4cb0/6190961732/il_600x600.6190961732_45px.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -104,7 +102,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2023/11/23/1f55118bb6dcf23f44a62db56392d7d7-248a421e59c9569df36a6e64cbf8193e.jpg"
+                src="https://i.etsystatic.com/27144702/r/il/eef960/6005625712/il_794xN.6005625712_p74x.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -121,7 +119,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/540x540/asset.prtvstatic.com/2024/11/01/pullover-hoodie-mockup-featuring-an-autumn-outfit-m1272-049d2b3292c711914b30c3ab0d7016d0.png"
+                src="https://i.etsystatic.com/38762697/r/il/b54b2b/5840153254/il_794xN.5840153254_8mxn.jpg"
                 alt=""
                 style={{
                   width: "150px",
@@ -138,7 +136,7 @@ export default function BubbleCategory() {
             <div className="d-flex justify-content-center">
               <img
                 className="rounded-circle"
-                src="https://cdn.printerval.com/unsafe/540x540/storage.googleapis.com/printerval-us/2022/01/08/premium-matte-vertical-posters-cb5db98c1a81f0953f09b52faaa1955f.jpg"
+                src="https://i.etsystatic.com/50170924/r/il/acb8b6/5893911338/il_600x600.5893911338_7zqn.jpg"
                 alt=""
                 style={{
                   width: "150px",

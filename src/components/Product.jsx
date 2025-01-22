@@ -12,11 +12,11 @@ export default function Product({ product }) {
           <div className="box-image" style={{ height: "280px" }}>
             <img
               src={
-                product.image instanceof File
-                  ? URL.createObjectURL(product.image)
-                  : product.image?.startsWith("http")
-                  ? product.image
-                  : urlImage + product.image
+                product.main_image instanceof File
+                  ? URL.createObjectURL(product.main_image)
+                  : product.main_image?.startsWith("http")
+                  ? product.main_image
+                  : urlImage + product.main_image
               }
               className="img-product"
               alt={product.name || "Product image"}

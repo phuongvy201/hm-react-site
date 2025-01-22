@@ -51,6 +51,6 @@ export const ColorOptions = [
   { value: "#032B44", label: "Vintage Heather Navy" },
   { value: "#ffffff", label: "White" },
   { value: "#FFFF00", label: "Yellow" },
-  { value: "#F4F4F4", label: "Sand" },
+  { value: "#cfc5b4", label: "Sand" },
   { value: "#B2B2B2", label: "Ash Grey" },
 ];

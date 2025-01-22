@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import postService from "../../../service/PostService";
 import { urlImage } from "../../../config";
+import HomeRecentlyViewedProducts from "../products/HomeRecentlyViewedProducts";
+import RecentlyViewed from "../products/RecentlyViewed";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -168,7 +170,10 @@ export default function BlogDetail() {
             ))}
           </div>
         </div>
+  
       </div>
+      <HomeRecentlyViewedProducts />
+          <RecentlyViewed />
     </div>
   );
 }

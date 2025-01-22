@@ -142,13 +142,13 @@ body {
   font-weight: 500;
 }
 #menu a span:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 
 .search-container {
   display: flex;
   align-items: center;
-  border: 2px solid orange;
+  border: 2px solid #e2150c;
   border-radius: 25px;
   padding: 5px 10px;
   width: 95%;
@@ -363,7 +363,7 @@ body {
   font-size: 12px;
 }
 .header-quicklink .position-relative > i:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 /* ------------------------------NAVBAR------------------------- */
 
@@ -393,7 +393,7 @@ body {
   color: #333;
 }
 .navbar a:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 
 /* General styling for the dropdown menu */
@@ -454,7 +454,7 @@ body {
   text-align: center;
 }
 .badge {
-  background-color: #ff6f00;
+  background-color: #e2150c;
   color: white;
   font-size: 12px;
   border-radius: 50%;
@@ -557,11 +557,12 @@ body {
   border-radius: 5px;
 }
 .text-category:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 /* ------------------------------POPULAR PRODUCT------------------------- */
 .component-heading {
-  margin: 40px 0;
+  margin-top: 40px;
+  margin-bottom: 20px;
   text-align: center;
   font-size: 24px;
 }
@@ -577,7 +578,7 @@ body {
 }
 
 .product-box a h5:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 
 .product-box a {
@@ -610,7 +611,7 @@ body {
   font-size: 36px;
 }
 .printerval .content p.print {
-  color: #ff7300;
+  color: #e2150c;
 }
 .printerval .content p.spice {
   position: relative;
@@ -698,7 +699,7 @@ body {
   background-color: #fdedec;
 }
 .fit-guarantee .title {
-  color: #ff6600;
+  color: #e2150c;
   font-size: 24px;
   font-weight: 700;
 }
@@ -722,7 +723,7 @@ body {
   margin-top: 10px;
 }
 .guarantee-description a {
-  color: #ff6600;
+  color: #e2150c;
   text-decoration: none;
 }
 /* ------------------------------REFER-FRIEND------------------------- */
@@ -732,7 +733,7 @@ body {
 /* ------------------------------ABOUTUS------------------------- */
 .about-us a {
   text-decoration: none;
-  color: #ff7300;
+  color: #e2150c;
 }
 .about-us h2 {
   font-weight: 400;
@@ -749,7 +750,7 @@ body {
   font-weight: 500;
 }
 .blog a:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 .blog p {
   width: 100%;
@@ -828,7 +829,7 @@ body {
   font-size: 14px;
 }
 .single-page a:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 .single-page .title-single-page {
   text-decoration: none;
@@ -836,7 +837,6 @@ body {
   font-weight: 500;
   font-size: 18px;
 }
-
 
 /* ------------------------------ RESPONSIVE ------------------------- */
 
@@ -931,7 +931,7 @@ body {
     position: absolute;
     top: -5px; /* Điều chỉnh vị trí trên */
     right: -15px; /* Điều chỉnh vị trí ngang */
-    background-color: red;
+    background-color: #e2150c;
     color: white;
     font-size: 12px;
     font-weight: bold;
@@ -1228,7 +1228,7 @@ body {
 
 .price {
   font-weight: 600;
-  color: #dc3545;
+  color: #e2150c;
 }
 
 .order-footer {

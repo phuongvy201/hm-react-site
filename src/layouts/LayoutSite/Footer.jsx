@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import logo from "../../assets/imgs/bluprinter logo.png";
 const Footer = () => {
   return (
-    <section style={{ backgroundColor: "#2f466c" }} className="footer mt-5">
+    <section style={{ backgroundColor: "#2f466c" }} className="footer">
       <div className="container">
         <div className="policy-wrapper py-4">
           <div className="row">
@@ -118,7 +118,7 @@ const Footer = () => {
                     </Link>
                   </div>
                   <div className="p-2">
-                    <Link to="">
+                    <Link to="https://www.instagram.com/blu.printer">
                       <img
                         className="img-fluid"
                         src="https://printerval.com/assets/images/social/instagram.svg?v=31102023"
@@ -145,20 +145,20 @@ const Footer = () => {
                     </Link>
                   </div>
                   <div className="p-2">
-                    <Link to="https://www.tiktok.com/@blu.printer">
+                    <Link to="https://www.pinterest.com/bluprinter/">
                       <img
                         className="img-fluid"
                         src="https://printerval.com/assets/images/social/pinterest.svg?v=31102023"
-                        alt="tiktok"
+                        alt="pinterest"
                       />
                     </Link>
                   </div>
                   <div className="p-2">
-                    <Link to="https://www.tiktok.com/@blu.printer">
+                    <Link to="https://x.com/Bluprinter25">
                       <img
                         className="img-fluid"
                         src="https://printerval.com/assets/images/social/twitter.svg?v=31102023"
-                        alt="tiktok"
+                        alt="twitter"
                       />
                     </Link>
                   </div>
@@ -237,33 +237,36 @@ const Footer = () => {
             <div className="col-6 col-md-2 col-lg-2 single-page mt-3">
               <div className="d-flex flex-column mb-3">
                 <div className="p-2">
-                  <Link to="#">
+                  <Link to="https://www.dmca.com/Protection/Status.aspx?id=7afce096-ea62-47a0-8c3b-a3fbd663bf4d&refurl=https%3a%2f%2fbluprinter.com%2f&rlo=true">
                     <img
                       src="https://images.dmca.com/Badges/DMCA_logo-grn-btn150w.png?ID=005e124c-c682-4f1d-a564-1bc657921504"
                       alt="logo"
                     />
                   </Link>
                 </div>
-                <div className="p-2">
-                  <Link to="#">
-                    <img
-                      className="img-fluid"
-                      src="https://app.trustlock.co/images/ModernMicroProW_Background/trust-seal-badge-privacy.png"
-                      alt="logo"
-                    />
-                  </Link>
-                </div>
-                <div className="p-2">
-                  <Link to="#">
-                    <img
-                      className="img-fluid"
-                      src="https://app.trustlock.co/images/ModernMicroProW_Background/trust-seal-badge-business.png"
-                      alt="logo"
-                    />
-                  </Link>
+
+                {/* Trustpilot Widget */}
+                <div className="p-2 ">
+                  <div
+                    className="trustpilot-widget"
+                    data-locale="en-US"
+                    data-template-id="56278e9abfbbba0bdcd568bc"
+                    data-businessunit-id="678110cc4775333e5320365e"
+                    data-style-height="52px"
+                    data-style-width="100%"
+                  >
+                    <Link
+                      to="https://www.trustpilot.com/review/bluprinter.com"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      Trustpilot
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
+
             <div className="col-lg-5 col-md-12">
               <div
                 style={{

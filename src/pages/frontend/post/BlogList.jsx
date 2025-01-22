@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import postService from "../../../service/PostService";
 import { urlImage } from "../../../config";
+import HomeRecentlyViewedProducts from "../products/HomeRecentlyViewedProducts";
+import RecentlyViewed from "../products/RecentlyViewed";
 
 export default function BlogList() {
   const [posts, setPosts] = useState([]);
@@ -192,6 +194,8 @@ export default function BlogList() {
           </div>
         </div>
       </div>
+      <HomeRecentlyViewedProducts />
+      <RecentlyViewed />
     </div>
   );
 }

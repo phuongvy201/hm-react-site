@@ -1,48 +1,51 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import productService from "../../../service/ProductService";
 import ProductCardSm from "../../../components/ProductCardSm";
 
 export default function RecentlyViewed() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [viewedProducts, setViewedProducts] = useState([]);
 
-  const user = localStorage.getItem("user");
-  const customerId = user ? JSON.parse(user).id : null;
-
-  const fetchProducts = async () => {
-    if (!customerId) {
-      setError("Vui lòng đăng nhập để xem sản phẩm đã xem");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await productService.getRecentlyViewedProducts(
-        customerId
-      );
-      if (response.data.success) {
-        setProducts(response.data.data);
-      }
-    } catch (err) {
-      setError("Không thể tải danh sách sản phẩm");
-      console.error("Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
   useEffect(() => {
-    fetchProducts();
+    // Lấy sản phẩm từ localStorage
+    const recentlyViewed = JSON.parse(
+      localStorage.getItem("recentlyViewed") || "[]"
+    );
+
+    console.log("recentlyViewed", recentlyViewed);
+    setViewedProducts(recentlyViewed);
   }, []);
+
+  if (viewedProducts.length === 0) return null;
+
   return (
-    <div className="container">
-      <div className="recently-viewed">
-        <h4 className="component-heading">Shop Popular Products </h4>
-        <div className="row">
-          {products.map((product) => (
-            <ProductCardSm key={product.id} product={product} />
-          ))}
+    <div className="container d-block d-md-none d-lg-none">
+      <div className="popular-product">
+        <h4>Recently viewed products</h4>
+        <div
+          className="products-scroll"
+          style={{
+            overflowX: "auto",
+            whiteSpace: "nowrap",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            paddingBottom: "10px",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              gap: "15px",
+            }}
+          >
+            {viewedProducts.map((product) => (
+              <div
+                key={product.id}
+                style={{ width: "200px", flex: "0 0 auto" }}
+              >
+                <ProductCardSm product={product} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

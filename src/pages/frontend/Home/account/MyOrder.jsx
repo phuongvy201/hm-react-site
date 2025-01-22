@@ -9,6 +9,7 @@ export default function MyOrder() {
   useEffect(() => {
     const fetchOrders = async () => {
       const response = await orderService.getCustomerOrders();
+      console.log(response.data.orders);
       setOrders(response.data.orders);
     };
     fetchOrders();

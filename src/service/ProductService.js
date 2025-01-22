@@ -32,6 +32,9 @@ const productService = {
       `/products-search?keyword=${keyword}&page=${page}&per_page=${perPage}`
     );
   },
+  getRelatedProductsByKeyword: (keyword) => {
+    return httpAxios.get(`/products-you-may-love?keyword=${keyword}`);
+  },
 };
 
 export default productService;

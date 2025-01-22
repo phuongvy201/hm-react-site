@@ -13,23 +13,75 @@ export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { cartItems, shippingCost, total, formData, totalAmount } =
-    location.state || {
-      cartItems: [],
-      shippingCost: 0,
-      total: 0,
-      totalAmount: 0,
-      formData: {},
-    };
+  const { cartItems, shippingCost, total, totalAmount } = location.state || {
+    cartItems: [],
+    shippingCost: 0,
+    total: 0,
+    totalAmount: 0,
+  };
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState(null);
   const [client_id, setClienttId] = useState(null);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedTip, setSelectedTip] = useState(null);
+  const [tip, setTip] = useState(0);
 
   const [paypalError, setPaypalError] = useState(null);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
+
+  // Thêm state để quản lý form
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    country: "united-states",
+    address: "",
+    city: "",
+    zipCode: "",
+    shippingNotes: "",
+  });
+
+  // Thêm useEffect để load formData từ localStorage khi component mount
+  useEffect(() => {
+    const savedFormData = localStorage.getItem("checkoutFormData");
+    if (savedFormData) {
+      setFormData(JSON.parse(savedFormData));
+    }
+  }, []);
+
+  // Thêm useEffect để load tip từ localStorage khi component mount
+  // useEffect(() => {
+  //   const savedTip = localStorage.getItem("checkoutTip");
+  //   const savedSelectedTip = localStorage.getItem("selectedTip");
+  //   if (savedTip) {
+  //     setTip(parseFloat(savedTip));
+  //   }
+  //   if (savedSelectedTip) {
+  //     setSelectedTip(JSON.parse(savedSelectedTip));
+  //   }
+  // }, []);
+
+  // Cập nhật handleInputChange để lưu vào localStorage
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => {
+      const newState = {
+        ...prevState,
+        [name]: value,
+      };
+      // Lưu form data vào localStorage
+      localStorage.setItem("checkoutFormData", JSON.stringify(newState));
+      console.log(
+        "Form data updated:",
+        JSON.parse(localStorage.getItem("checkoutFormData"))
+      );
+
+      return newState;
+    });
+  };
 
   useEffect(() => {
     if (!cartItems.length) {
@@ -77,8 +129,10 @@ export default function Checkout() {
       const response = await httpAxios.post("/payment-test/save-transaction", {
         gateway_id: selectedGateway.id,
         paypal_order_id: orderData.orderID,
-        amount: total + shippingCost,
+        amount: total + shippingCost + tip,
         status: "COMPLETED",
+        tip_amount: tip,
+        handling_fee: 0,
       });
 
       if (!response.data.success) {
@@ -115,7 +169,12 @@ export default function Checkout() {
 
     initializePayPal();
   }, [total]);
-  const calculateTotals = (cartItems, shippingCost) => {
+  const calculateTotals = (
+    cartItems,
+    shippingCost,
+    tip = 0,
+    handlingFee = 0
+  ) => {
     let total = 0;
 
     cartItems.forEach((shop) => {
@@ -124,41 +183,49 @@ export default function Checkout() {
       });
     });
 
-    // Tổng giá trị bao gồm phí vận chuyển
-    const totalAmount = total + shippingCost;
+    // Tổng giá trị bao gồm phí vận chuyển, tip và handling fee
+    const totalAmount = total + shippingCost + tip + handlingFee;
 
     return { total, totalAmount };
   };
 
   // Cập nhật giá trị trong formData
-  const createPurchaseUnits = (cartItems, shippingCost) => {
-    const { total, totalAmount } = calculateTotals(cartItems, shippingCost);
+  const createPurchaseUnits = (cartItems, shippingCost, handlingFee = 0) => {
+    const { total, totalAmount } = calculateTotals(
+      cartItems,
+      shippingCost,
+      handlingFee
+    );
 
-    // Đảm bảo trả về cấu trúc yêu cầu đúng của PayPal
     return [
       {
         amount: {
           currency_code: "USD",
-          value: totalAmount.toFixed(2), // Tổng giá trị đơn hàng bao gồm cả phí vận chuyển
+          value: totalAmount.toFixed(2),
           breakdown: {
             item_total: {
               currency_code: "USD",
-              value: total.toFixed(2), // Tổng giá trị của các sản phẩm (không bao gồm phí vận chuyển)
+              value: total.toFixed(2),
             },
             shipping: {
               currency_code: "USD",
-              value: shippingCost.toFixed(2), // Phí vận chuyển
+              value: shippingCost.toFixed(2),
+            },
+
+            handling: {
+              currency_code: "USD",
+              value: handlingFee.toFixed(2),
             },
           },
         },
         items: cartItems.flatMap((shop, shopIndex) =>
           shop.items.map((item, itemIndex) => ({
-            name: `product - Position ${shopIndex + 1}-${itemIndex + 1}`, // Ghi "product - vị trí"
+            name: `product - Position ${shopIndex + 1}-${itemIndex + 1}`,
             unit_amount: {
               currency_code: "USD",
-              value: parseFloat(item.price).toFixed(2), // Giá sản phẩm
+              value: parseFloat(item.price).toFixed(2),
             },
-            quantity: item.count, // Số lượng sản phẩm
+            quantity: item.count,
           }))
         ),
       },
@@ -172,54 +239,178 @@ export default function Checkout() {
     }
   };
 
+  // const handleTipSelection = (tipPercentage) => {
+  //   if (tipPercentage === "other") {
+  //     const customTip = prompt("Nhập số tiền tip (USD):", "0");
+  //     if (customTip !== null) {
+  //       const tipAmount = parseFloat(customTip);
+  //       if (!isNaN(tipAmount) && tipAmount >= 0) {
+  //         setTip(tipAmount);
+  //         setSelectedTip("other");
+  //         // Lưu vào localStorage
+  //         localStorage.setItem("checkoutTip", tipAmount.toString());
+  //         localStorage.setItem("selectedTip", JSON.stringify("other"));
+  //       }
+  //     }
+  //   } else if (tipPercentage === "no-tips") {
+  //     setTip(0);
+  //     setSelectedTip("no-tips");
+  //     // Lưu vào localStorage
+  //     localStorage.setItem("checkoutTip", "0");
+  //     localStorage.setItem("selectedTip", JSON.stringify("no-tips"));
+  //   } else {
+  //     const tipAmount = (total * tipPercentage) / 100;
+  //     setTip(tipAmount);
+  //     setSelectedTip(tipPercentage);
+  //     // Lưu vào localStorage
+  //     localStorage.setItem("checkoutTip", tipAmount.toString());
+  //     localStorage.setItem("selectedTip", JSON.stringify(tipPercentage));
+  //   }
+  // };
+
+  // Thêm xóa tip trong localStorage sau khi thanh toán thành công
+  // const clearTipData = () => {
+  //   localStorage.removeItem("checkoutTip");
+  //   localStorage.removeItem("selectedTip");
+  // };
+
+  const createOrderData = async () => {
+    try {
+      console.log("Current form data:", formData);
+      const localFormData = JSON.parse(
+        localStorage.getItem("checkoutFormData")
+      );
+      console.log("Local form data:", localFormData);
+      // Phân nhóm các sản phẩm theo sellerId
+      const groupedItems = cartItems.reduce((acc, seller) => {
+        acc[seller.sellerId] = seller.items.map((item) => ({
+          id: item.id,
+          count: item.count,
+          price: parseFloat(item.price) || 0,
+          color: item.color || null,
+          size: item.size || null,
+        }));
+        return acc;
+      }, {});
+
+      // Tạo đơn hàng cho từng người bán
+      const orderResponses = await Promise.all(
+        Object.entries(groupedItems).map(async ([sellerId, sellerItems]) => {
+          // Tính tổng số tiền cho từng seller
+          const sellerTotal = sellerItems.reduce(
+            (total, item) => total + (item.count * parseFloat(item.price) || 0),
+            0
+          );
+
+          // Chuẩn bị dữ liệu cho đơn hàng
+          const orderData = {
+            seller_id: parseInt(sellerId),
+            customer_id: token ? user.id : null,
+            total_amount: sellerTotal,
+            order_details: sellerItems.map((item) => ({
+              product_id: item.id,
+              quantity: item.count,
+              price: parseFloat(item.price) || 0,
+              attributes: {
+                color: item.color || null,
+                size: item.size || null,
+                type: item.type || null,
+              },
+            })),
+            shipping: {
+              first_name: localFormData.firstName?.trim() || "",
+              last_name: localFormData.lastName?.trim() || "",
+              phone: localFormData.phone?.trim() || "",
+              email: localFormData.email?.trim() || "",
+              address: localFormData.address?.trim() || "",
+              country: localFormData.country?.trim() || "",
+              city: localFormData.city?.trim() || "",
+              zip_code: localFormData.zipCode?.trim() || "",
+              shipping_method: "standard",
+              shipping_cost: shippingCost,
+              shipping_notes: localFormData.shippingNotes?.trim() || "",
+            },
+          };
+
+          console.log("Sending order data:", orderData);
+
+          try {
+            const orderResponse = await orderService.createOrder(orderData);
+            console.log("Order Response:", orderResponse);
+            return orderResponse.data.order;
+          } catch (error) {
+            console.error("Error creating order:", {
+              error: error.response?.data || error,
+              status: error.response?.status,
+              validationErrors: error.response?.data?.errors,
+            });
+            throw error;
+          }
+        })
+      );
+
+      return orderResponses;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Thêm hàm truncate để giới hạn độ dài chuỗi
+  const truncateText = (text, limit = 50) => {
+    if (text.length <= limit) return text;
+    return text.slice(0, limit) + "...";
+  };
+
   return (
-    <div className="container">
+    <div className="container py-5">
       <div className="row">
-        <div className="col-12 col-md-12 col-lg-6">
+        <div className="col-12 col-md-12 col-lg-6 mx-auto">
           <h4>Billing information</h4>
-          <div className="billing-form-row  mt-3">
+          <div className="billing-form-row mt-3">
             <div className="billing-form-group">
               <input
                 type="text"
                 placeholder="First name"
                 name="firstName"
-                disabled
-                required
                 value={formData.firstName}
+                onChange={handleInputChange}
+                required
               />
             </div>
             <div className="billing-form-group">
               <input
                 type="text"
-                disabled
                 placeholder="Last name"
                 name="lastName"
                 value={formData.lastName}
+                onChange={handleInputChange}
+                required
               />
             </div>
           </div>
           <div className="billing-form-group">
             <input
               type="text"
-              disabled
               placeholder="Phone (required)"
               name="phone"
               value={formData.phone}
+              onChange={handleInputChange}
+              required
             />
           </div>
           <div className="billing-form-group">
             <input
-              type="text"
-              disabled
+              type="email"
               placeholder="Email (required)"
               name="email"
               value={formData.email}
+              onChange={handleInputChange}
+              required
             />
           </div>
           <div className="shipping-address">
             <h4>Shipping Address</h4>
             <form>
-              <div className="billing-form-row"></div>
               <div className="container-country">
                 <div className="header-country">
                   <div>
@@ -227,8 +418,15 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div className="select-container-country">
-                  <select value={formData.country} disabled>
+                  <select
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    defaultValue="united-states"
+                    required
+                  >
                     <option value="">Select a country</option>
+                    <option value="united-states">United States</option>
                     <option value="afghanistan">Afghanistan</option>
                     <option value="albania">Albania</option>
                     <option value="algeria">Algeria</option>
@@ -439,9 +637,6 @@ export default function Checkout() {
                       United Arab Emirates
                     </option>
                     <option value="united-kingdom">United Kingdom</option>
-                    <option value="united-states">United States</option>
-                    <option value="uruguay">Uruguay</option>
-                    <option value="uzbekistan">Uzbekistan</option>
                     <option value="vanuatu">Vanuatu</option>
                     <option value="vatican-city">Vatican City</option>
                     <option value="venezuela">Venezuela</option>
@@ -454,40 +649,42 @@ export default function Checkout() {
               </div>
               <div className="billing-form-group mt-3">
                 <input
-                  disabled
                   type="text"
                   placeholder="Apartment, suite, etc. (optional)"
                   name="address"
                   value={formData.address}
+                  onChange={handleInputChange}
                 />
               </div>
               <div className="billing-form-row">
                 <div className="billing-form-group">
                   <input
-                    disabled
                     placeholder="City / Suburb"
                     type="text"
                     name="city"
                     value={formData.city}
+                    onChange={handleInputChange}
+                    required
                   />
                 </div>
               </div>
               <div className="billing-form-group mt-2">
                 <input
-                  disabled
                   type="text"
                   placeholder="ZIP / Postal code"
                   name="zipCode"
                   value={formData.zipCode}
+                  onChange={handleInputChange}
+                  required
                 />
               </div>
               <div className="billing-form-group mt-2">
                 <input
-                  disabled
                   type="text"
                   placeholder="Order notes (optional)"
                   name="shippingNotes"
                   value={formData.shippingNotes}
+                  onChange={handleInputChange}
                 />
               </div>
             </form>
@@ -509,17 +706,15 @@ export default function Checkout() {
                   <div key={item.id} className="order-item">
                     <img
                       src={
-                        item.image instanceof File
-                          ? URL.createObjectURL(item.image)
-                          : item.image?.startsWith("http")
-                          ? item.image
-                          : urlImage + item.image
+                        item.image.startsWith("images")
+                          ? urlImage + item.image
+                          : item.image
                       }
                       alt={item.name}
                       className="order-item-image ms-2"
                     />
                     <div className="product-details">
-                      <h2>{item.name}</h2>
+                      <h2>{truncateText(item.name)}</h2>
                       {item.size && <p>Size: {item.size}</p>}
                       {item.color && <p>Color: {item.color}</p>}
                       {item.type && <p>Type: {item.type}</p>}
@@ -556,10 +751,13 @@ export default function Checkout() {
                 <div className="details">
                   5 - 7 business days with tracking
                   <br />
-                  <i className="fas fa-check check" /> Tracking number
+                  <i className="fas fa-check check" /> Delivery date guaranteed
+                  <i className="fas fa-check check mx-2" /> Tracking number
                 </div>
               </div>
-              <div className="price">${parseFloat(shippingCost).toFixed(2)}</div>
+              <div className="price">
+                ${parseFloat(shippingCost).toFixed(2)}
+              </div>
             </div>
           </div>
           <div className="order-summary mt-3">
@@ -572,23 +770,98 @@ export default function Checkout() {
               <span>Use promotion code</span>
             </div>
             <div className="details">
-              <div>
-                <span>Subtotal:</span>
-                <span className="value">${parseFloat(total).toFixed(2)}</span>
+              <div className="my-3">
+                <span className="fw-bold">Subtotal:</span>
+                <span className="value fw-bold">
+                  ${parseFloat(total).toFixed(2)}
+                </span>
               </div>
-              <div>
-                <span>Shipping fee:</span>
-                <span className="value">
+              <div className="my-3">
+                <span className="fw-bold">Shipping fee:</span>
+                <span className="value fw-bold">
                   + ${parseFloat(shippingCost).toFixed(2)}
                 </span>
               </div>
 
-              <div>
-                <span>Total:</span>
-                <span className="total">
+              <div className="my-3">
+                <span className="fw-bold">Handling fee:</span>
+                <span className="value fw-bold">
+                  + ${parseFloat(0).toFixed(2)}
+                </span>
+              </div>
+
+              <div className="my-3">
+                <span className="fw-bold">Total:</span>
+                <span className="total fw-bold">
                   ${parseFloat(totalAmount).toFixed(2)}
                 </span>
               </div>
+              {/* <div className="tips-section my-2">
+                <div className="d-flex flex-column align-items-center">
+                  <div className="tip-header mb-2">
+                    <small style={{ color: "#333", fontSize: "0.85rem" }}>
+                      Enjoy your purchase? Buy our designers a coffee ❤️
+                    </small>
+                  </div>
+                  <div className="tip-buttons d-flex gap-1">
+                    <button
+                      className={`btn ${
+                        selectedTip === "no-tips"
+                          ? "btn-success"
+                          : "btn-outline-success"
+                      } py-1 px-2`}
+                      onClick={() => handleTipSelection("no-tips")}
+                      style={{ minWidth: "45px", fontSize: "0.75rem" }}
+                    >
+                      No
+                    </button>
+                    <button
+                      className={`btn ${
+                        selectedTip === 15
+                          ? "btn-success"
+                          : "btn-outline-success"
+                      } py-1 px-2`}
+                      onClick={() => handleTipSelection(15)}
+                      style={{ minWidth: "45px", fontSize: "0.75rem" }}
+                    >
+                      15%
+                    </button>
+                    <button
+                      className={`btn ${
+                        selectedTip === 10
+                          ? "btn-success"
+                          : "btn-outline-success"
+                      } py-1 px-2`}
+                      onClick={() => handleTipSelection(10)}
+                      style={{ minWidth: "45px", fontSize: "0.75rem" }}
+                    >
+                      10%
+                    </button>
+                    <button
+                      className={`btn ${
+                        selectedTip === 5
+                          ? "btn-success"
+                          : "btn-outline-success"
+                      } py-1 px-2`}
+                      onClick={() => handleTipSelection(5)}
+                      style={{ minWidth: "45px", fontSize: "0.75rem" }}
+                    >
+                      5%
+                    </button>
+                    <button
+                      className={`btn ${
+                        selectedTip === "other"
+                          ? "btn-success"
+                          : "btn-outline-success"
+                      } py-1 px-2`}
+                      onClick={() => handleTipSelection("other")}
+                      style={{ minWidth: "45px", fontSize: "0.75rem" }}
+                    >
+                      Other
+                    </button>
+                  </div>
+                </div>
+              </div> */}
             </div>
           </div>
           <div className="container-checkout">
@@ -621,7 +894,9 @@ export default function Checkout() {
 
                       const purchase_units = createPurchaseUnits(
                         cartItems,
-                        shippingCost
+                        shippingCost,
+                        tip,
+                        0
                       );
 
                       return actions.order.create({
@@ -646,210 +921,19 @@ export default function Checkout() {
                         );
                       }
 
-                      // Lưu giao dịch
                       await saveTransactionData(data);
-
-                      // Tạo order và shipping cùng lúc
-                      const createOrderData = async () => {
-                        try {
-                          // Phân nhóm các sản phẩm theo sellerId
-                          const groupedItems = cartItems.reduce(
-                            (acc, seller) => {
-                              acc[seller.sellerId] = seller.items.map(
-                                (item) => ({
-                                  id: item.id,
-                                  count: item.count,
-                                  price: parseFloat(item.price) || 0,
-                                  color: item.color || null,
-                                  size: item.size || null,
-                                })
-                              );
-                              return acc;
-                            },
-                            {}
-                          );
-
-                          // Tạo đơn hàng cho từng người bán
-                          const orderResponses = await Promise.all(
-                            Object.entries(groupedItems).map(
-                              async ([sellerId, sellerItems]) => {
-                                // Tính tổng số tiền cho từng seller
-                                const sellerTotal = sellerItems.reduce(
-                                  (total, item) =>
-                                    total +
-                                    (item.count * parseFloat(item.price) || 0),
-                                  0
-                                );
-
-                                // Chuẩn bị dữ liệu cho đơn hàng
-                                const orderData = {
-                                  seller_id: parseInt(sellerId), // Chuyển sellerId thành số
-                                  customer_id: token ? user.id : null, // ID khách hàng, dùng null nếu không đăng nhập
-                                  total_amount: sellerTotal, // Tổng số tiền cho seller
-                                  order_details: sellerItems.map((item) => ({
-                                    product_id: item.id, // ID sản phẩm
-                                    quantity: item.count, // Số lượng
-                                    price: parseFloat(item.price) || 0, // Giá của từng sản phẩm
-                                    attributes: {
-                                      color: item.color || null, // Lấy giá trị màu từ đối tượng color
-                                      size: item.size || null, // Giá trị size trực tiếp
-                                      type: item.type || null, // Giá trị type trực tiếp
-                                    },
-                                  })),
-                                  shipping: {
-                                    shipping_method: "standard",
-                                    first_name: formData.firstName,
-                                    last_name: formData.lastName,
-                                    phone: formData.phone,
-                                    email: formData.email,
-                                    address: formData.address,
-                                    country: formData.country,
-                                    city: formData.city,
-                                    zip_code: formData.zipCode,
-                                    shipping_cost: shippingCost,
-                                    shipping_notes:
-                                      formData.shippingNotes || "",
-                                  },
-                                };
-
-                                // Log dữ liệu trước khi gửi
-                                console.log("OrderData being sent:", orderData);
-                                console.log("Seller Items:", sellerItems);
-                                console.log("Form Data:", formData);
-                                console.log("User Info:", user);
-
-                                try {
-                                  // Gửi yêu cầu tạo đơn hàng
-                                  const orderResponse =
-                                    await orderService.createOrder(orderData);
-                                  console.log("orderResponse", orderResponse);
-                                  // Log response nếu không thành công
-                                  // if (!orderResponse.data.success) {
-                                  //   console.error(
-                                  //     "Order creation failed:",
-                                  //     orderResponse.data
-                                  //   );
-                                  //   throw new Error(
-                                  //     `Không thể tạo đơn hàng cho người bán ${sellerId}: ${orderResponse.data.message}`
-                                  //   );
-                                  // }
-
-                                  return orderResponse.data.order;
-                                } catch (error) {
-                                  // Log chi tiết lỗi
-                                  console.error("Error creating order:", {
-                                    error: error.response?.data || error,
-                                    status: error.response?.status,
-                                    validationErrors:
-                                      error.response?.data?.errors,
-                                  });
-                                  throw error;
-                                }
-                              }
-                            )
-                          );
-
-                          return orderResponses;
-                        } catch (error) {
-                          throw error;
-                        }
-                      };
-
-                      // Tích hợp trực tiếp trong PayPalButtons
-                      <PayPalButtons
-                        style={{ layout: "vertical" }}
-                        disabled={isProcessing}
-                        forceReRender={[total, totalAmount, shippingCost]}
-                        createOrder={async (data, actions) => {
-                          try {
-                            if (!selectedGateway) {
-                              throw new Error(
-                                "Payment gateway not initialized"
-                              );
-                            }
-
-                            const purchase_units = createPurchaseUnits(
-                              total,
-                              totalAmount,
-                              shippingCost,
-                              cartItems
-                            );
-
-                            return actions.order.create({
-                              purchase_units,
-                            });
-                          } catch (error) {
-                            Toast.fire({
-                              icon: "error",
-                              title: error.message || "Unable to create order",
-                            });
-                            throw error;
-                          }
-                        }}
-                        onApprove={async (data, actions) => {
-                          try {
-                            setIsProcessing(true);
-                            await actions.order.capture();
-
-                            if (!selectedGateway) {
-                              throw new Error(
-                                "Payment gateway information not found"
-                              );
-                            }
-
-                            // Lưu giao dịch
-                            await saveTransactionData(data);
-
-                            // Tạo order và shipping cùng lúc
-                            await createOrderData();
-
-                            // Hiển thị thông báo thành công
-                            setPaymentSuccess(true);
-                            Toast.fire({
-                              icon: "success",
-                              title: "Order placed successfully!",
-                            });
-
-                            // Chuyển hướng về trang chủ
-                            dispatch(clearCart());
-                            setTimeout(() => {
-                              navigate("/thank-you");
-                            }, 1500);
-                          } catch (error) {
-                            Toast.fire({
-                              icon: "error",
-                              title:
-                                error.message ||
-                                "Error occurred while processing the order",
-                            });
-                          } finally {
-                            setIsProcessing(false);
-                          }
-                        }}
-                        onCancel={() => {
-                          Toast.fire({
-                            icon: "warning",
-                            title: "Payment has been cancelled",
-                          });
-                        }}
-                        onError={(err) => {
-                          Toast.fire({
-                            icon: "error",
-                            title: "An error occurred during payment",
-                          });
-                        }}
-                      />;
-
-                      // Tích hợp trực tiếp trong PayPalButtons
-
                       await createOrderData();
+
                       setPaymentSuccess(true);
                       Toast.fire({
                         icon: "success",
                         title: "Order placed successfully!",
                       });
 
-                      // Chuyển hướng về trang chủ
+                      // Xóa dữ liệu form và tip khỏi localStorage
+                      localStorage.removeItem("checkoutFormData");
+                      // clearTipData();
+
                       dispatch(clearCart());
                       setTimeout(() => {
                         navigate("/thank-you");

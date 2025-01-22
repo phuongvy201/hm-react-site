@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import productService from "../../../service/ProductService";
 import Product from "../../../components/Product";
+import ProductCardSm from "../../../components/ProductCardSm";
 
 export default function ProductRelatedMobile({ productId }) {
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -35,11 +36,33 @@ export default function ProductRelatedMobile({ productId }) {
       <div className="popular-product">
         {relatedProducts && relatedProducts.length > 0 ? (
           <>
-            <h4 className="component-heading">Related Products</h4>
-            <div className="row">
-              {relatedProducts.map((product) => (
-                <Product key={product.id} product={product} />
-              ))}
+            <h4 >Products you'll love!</h4>
+            <div
+              className="products-scroll"
+              style={{
+                overflowX: "auto",
+                whiteSpace: "nowrap",
+                WebkitOverflowScrolling: "touch",
+                scrollbarWidth: "none", // Firefox
+                msOverflowStyle: "none", // IE and Edge
+                paddingBottom: "10px",
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-flex",
+                  gap: "15px",
+                }}
+              >
+                {relatedProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    style={{ width: "200px", flex: "0 0 auto" }}
+                  >
+                    <ProductCardSm product={product} />
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         ) : (

@@ -241,10 +241,10 @@
   font-weight: 500;
 }
 .add-to-cart-btn {
-  background-color: #ff5a5f;
+  background-color: #e2150c;
   color: white;
   border: none;
-
+  opacity: 0.8;
   border-radius: 30px;
   padding: 15px 30px;
   font-size: 20px;
@@ -270,7 +270,7 @@
     2px -2px 5px rgba(189, 189, 189, 0.3), -2px 2px 5px rgba(189, 189, 189, 0.3);
 }
 .favorite-btn i {
-  color: #ff5a5f;
+  color: #e2150c;
   font-size: 20px;
 }
 .guarantee-box {
@@ -292,7 +292,7 @@
   font-weight: 500;
 }
 .guarentee-link {
-  color: #ff7300;
+  color: #e2150c;
   font-weight: 500;
   text-decoration: none;
 }
@@ -306,7 +306,7 @@
   color: #333;
 }
 .features-table td a {
-  color: #ff6600;
+  color: #e2150c;
   text-decoration: none;
 }
 .features-table td a:hover {
@@ -366,10 +366,10 @@
   font-weight: bold;
 }
 .shipping-policy .highlight {
-  color: #ff6600;
+  color: #e2150c;
 }
 .shipping-policy .link {
-  color: #ff6600;
+  color: #e2150c;
   text-decoration: none;
 }
 .shipping-policy .link:hover {
@@ -397,7 +397,7 @@
   font-size: 18px;
   font-weight: 500;
   text-decoration: none;
-  color: #ff6600;
+  color: #e2150c;
 }
 .title-design {
   font-size: 16px;
@@ -434,7 +434,7 @@
   height: auto;
 }
 .container-right .product-card .price {
-  color: #d9534f;
+  color: #e2150c;
   font-size: 18px;
   font-weight: bold;
 }
@@ -447,7 +447,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #d9534f;
+  background-color: #e2150c;
   color: #fff;
   padding: 5px 10px;
   font-size: 12px;
@@ -459,7 +459,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #d9534f;
+  background-color: #e2150c;
   color: #fff;
   padding: 5px 10px;
   font-size: 12px;
@@ -476,7 +476,7 @@
 }
 
 .product-box a h5:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 
 .product-box a {
@@ -531,7 +531,7 @@
 }
 .rating-bar-fill {
   height: 100%;
-  background-color: #ffcc80;
+  background-color: #ea6a63;
   border-radius: 5px;
 }
 .rating-percentage {
@@ -539,7 +539,7 @@
   font-size: 14px;
 }
 .star i {
-  color: #ffcc80;
+  color: #e2150c;
 }
 .content-mobile {
   display: none;
@@ -589,7 +589,7 @@
   margin-left: 10px;
 }
 .review-rating {
-  color: #f5a623;
+  color: #e2150c;
   font-size: 10px;
   margin-left: auto;
 }
@@ -600,7 +600,7 @@
 }
 .write-review {
   display: inline-block;
-  background-color: #ff6600 !important;
+  background-color: #e2150c !important;
   color: #fff;
   padding: 10px 20px !important;
   border-radius: 20px !important;
@@ -638,7 +638,7 @@
 }
 
 .related-item:hover img {
-  border-color: #ff7f00;
+  border-color: #e2150c;
 }
 
 .related-item p {
@@ -648,7 +648,7 @@
 }
 
 .related-item:hover p {
-  color: #ff7f00;
+  color: #e2150c;
 }
 
 /* ------------------------------ TOP PICK ------------------------- */
@@ -713,7 +713,7 @@
   font-size: 14px;
 }
 .single-page a:hover {
-  color: #ff7300;
+  color: #e2150c;
 }
 .single-page .title-single-page {
   text-decoration: none;

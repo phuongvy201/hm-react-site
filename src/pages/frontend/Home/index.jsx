@@ -4,6 +4,9 @@ import ProductNew from "../products/ProductNew";
 import CategoryHome from "../CategoryHome";
 import PostLastestHome from "../post/PostLastestHome";
 import BubbleCategory from "../../../components/BubbleCategory";
+import RecentlyViewedProducts from "../products/RecentlyViewedProducts";
+import RecentlyViewed from "../products/RecentlyViewed";
+import HomeRecentlyViewedProducts from "../products/HomeRecentlyViewedProducts";
 
 const Home = () => {
   return (
@@ -244,6 +247,8 @@ const Home = () => {
         </div>
       </div>
       <PostLastestHome />
+      <HomeRecentlyViewedProducts />
+      <RecentlyViewed />
     </section>
   );
 };

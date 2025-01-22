@@ -28,6 +28,7 @@ export default function ProductCategory() {
         perPage
       );
       if (response.data.success) {
+        console.log(response.data.data);
         setProducts(response.data.data.products);
         setCategoryName(response.data.data.category.name);
         setPagination(response.data.data.pagination);

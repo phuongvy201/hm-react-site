@@ -12,6 +12,7 @@ export default function ProductNew() {
       const response = await productService.getNewProducts();
       if (response.data.success) {
         setProducts(response.data.data);
+        
       }
     } catch (err) {
       setError("Không thể tải danh sách sản phẩm");

@@ -36,6 +36,7 @@ export default function ShopProfile() {
           setTotalPages(response.data.data.products.last_page);
           setIdShop(response.data.data.shop.id);
           console.log(response.data.data.shop.id);
+          console.log(response.data.data.products.data);
         }
       } catch (error) {
         setError("Không thể tải thông tin shop");

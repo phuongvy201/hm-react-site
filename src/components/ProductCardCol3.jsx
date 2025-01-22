@@ -2,11 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { urlImage } from "../config";
 
-export default function ProductCardSm({ product }) {
+export default function ProductCardCol3({ product }) {
   if (!product) return null;
 
   return (
-    <div className="col-12 col-md-3 col-lg-3">
+    <div className="col-12 col-md-4 col-lg-4">
       <div className="product-box">
         <Link to={`/product/${product.slug}`} className="product-link">
           <div

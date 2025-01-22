@@ -1,0 +1,22 @@
+.size-guide-list {
+    list-style: none;
+  }
+  
+  .guide-menu-item:last-child {
+    border-bottom: none !important;
+  }
+  
+  .guide-menu-item.selected {
+    font-weight: 500;
+  }
+  
+  .guide-menu-item input {
+    border: none;
+    border-bottom: 2px solid #ddd;
+    padding: 5px 0;
+  }
+  
+  .guide-menu-item input:focus {
+    outline: none;
+    border-bottom-color: #007bff;
+  }
